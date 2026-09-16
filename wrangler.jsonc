@@ -32,7 +32,17 @@
     {
       "binding": "DB",
       "database_name": "wearwhat-db",
-      "database_id": "REPLACE_WITH_YOUR_D1_ID"
+      "database_id": "d5215dfd-0972-4152-97c0-94c861b48e9a"
+    }
+  ],
+
+  // R2 对象存储：存衣物照片。
+  // 库里只保留 /api/images/<uuid>.<ext> 这样的相对地址，图片本体在这里，
+  // 由 src/app/api/images/[...key]/route.ts 读出来回给浏览器。
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "wearwhat-images"
     }
   ],
 
