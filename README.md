@@ -2,7 +2,7 @@
 
 > 别问，问就是它。
 
-四季衣物管理 + AI 穿搭推荐的 Web 应用，移动优先设计，适配手机浏览器，可一键部署到 Cloudflare Workers + D1。
+四季衣物管理 + AI 穿搭推荐的 Web 应用，移动优先设计，适配手机浏览器，可一键部署到 Cloudflare Workers（D1 + R2）。
 
 ## 功能
 
@@ -17,23 +17,25 @@
 ## 技术栈
 
 - Next.js 16（App Router）+ TypeScript + Tailwind CSS 4 + shadcn/ui
-- Prisma ORM：本地开发用 SQLite，线上 Cloudflare D1（同一套 SQL 方言，见 `migrations/0001_init.sql`）
+- Prisma ORM：本地开发用 SQLite，线上 Cloudflare D1（同一套 SQL 方言，见 `migrations/0001_init.sql`）。
+  数据访问层 `src/lib/db.ts` 按运行时自动切换后端，对外只暴露一个 `db`
+- 图片：Cloudflare R2。上传前在浏览器端压到长边 720px，服务端转存 R2，库里只留图片地址
 - 天气：Open-Meteo（免 Key，带内存缓存）
-- AI：z-ai-web-dev-sdk（VLM 衣物识别 / LLM 搭配理由与搜索解析），均带超时降级
+- AI：任意 OpenAI 兼容端点（默认 DeepSeek），负责 VLM 衣物识别 / LLM 搭配理由与搜索解析，
+  端点与密钥走环境变量，三项能力均带超时降级
 
 ## 本地开发
 
 ```bash
 bun install
+bun run db:generate       # 生成 Prisma 客户端
 bun run db:push           # 创建 SQLite 表
 bun scripts/seed.ts       # 可选：导入 12 件种子衣物（图片在 public/seed）
 bun run dev               # 启动开发服务器 http://localhost:3000
 ```
 
-## 部署到 Cloudflare（Workers + D1）
+## 部署到 Cloudflare（Workers + D1 + R2）
 
-配置已就绪：`wrangler.jsonc`、`open-next.config.ts`、D1 适配层 `src/lib/db-cf.ts`。
-
-完整步骤（创建 D1、回填 database_id、应用迁移、构建部署）见 [DEPLOY.md](./DEPLOY.md)。
+完整步骤（创建 D1 与 R2、配置 AI 凭证、应用迁移、构建部署）见 [DEPLOY.md](./DEPLOY.md)。
 
 产品方案与需求背景见 [开发文档.md](./开发文档.md)。

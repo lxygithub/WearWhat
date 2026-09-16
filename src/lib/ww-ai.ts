@@ -1,6 +1,17 @@
-// WearWhat AI 能力层（仅服务端使用 z-ai-web-dev-sdk）
+// WearWhat AI 能力层（仅服务端）
+//
+// 原实现依赖 z-ai-web-dev-sdk，那个 SDK 只在作者的沙箱环境里可用，部署到 Cloudflare
+// 之后连不上。这里改成直接用 fetch 调 OpenAI 兼容端点（DeepSeek），凭证/模型走环境变量。
+// 三个对外函数的签名与返回结构保持不变，所以 API 路由与引擎层都不用动。
+//
+// 环境变量（Workers 上用 `wrangler secret put` 配）：
+//   ZAI_BASE_URL  如 https://api.deepseek.com
+//   ZAI_API_KEY   API Key
+//   ZAI_MODEL     如 deepseek-flash（DeepSeek 要求必传 model）
+//
+// 三层都有降级：识别失败抛错（由前端提示手动填），推荐理由与搜索解析失败返回 null，
+// 调用方各自有兜底路径，不会把 500 抛给用户。
 
-import ZAI from 'z-ai-web-dev-sdk'
 import type { RecognizeResult } from '@/components/wearwhat/api'
 
 /** 从模型输出中鲁棒提取 JSON（容忍代码围栏/前后缀文本） */
@@ -25,6 +36,72 @@ function extractJSON<T>(text: string): T | null {
   return null
 }
 
+interface ZaiConfig {
+  baseUrl: string
+  apiKey: string
+  model?: string
+}
+
+let cachedConfig: ZaiConfig | undefined
+
+function resolveConfig(): ZaiConfig {
+  if (cachedConfig) return cachedConfig
+
+  const rawBase = process.env.ZAI_BASE_URL?.trim()
+  const apiKey = process.env.ZAI_API_KEY?.trim()
+  if (!rawBase || !apiKey) {
+    throw new Error(
+      'AI 凭证未配置：请设置 ZAI_BASE_URL 与 ZAI_API_KEY（Workers 上用 wrangler secret put）'
+    )
+  }
+
+  cachedConfig = {
+    baseUrl: rawBase.replace(/\/+$/, ''),
+    apiKey,
+    model: process.env.ZAI_MODEL?.trim() || undefined,
+  }
+  return cachedConfig
+}
+
+interface ChatMessage {
+  role: string
+  content: unknown
+}
+
+/**
+ * 调用 OpenAI 兼容的 /chat/completions，返回首条回复的文本。
+ * 图片理解不需要单独端点：多模态由消息体里的 image_url 内容块表达。
+ */
+async function zaiChat(
+  messages: ChatMessage[],
+  timeoutMs = 30_000
+): Promise<string> {
+  const config = resolveConfig()
+  const response = await fetch(`${config.baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      // 仅当配置了模型名时才带：部分兼容端点由服务端决定模型，多传反而报错
+      ...(config.model ? { model: config.model } : {}),
+      messages,
+    }),
+    signal: AbortSignal.timeout(timeoutMs),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    throw new Error(`AI 请求失败 ${response.status}：${errorBody.slice(0, 200)}`)
+  }
+
+  const json = (await response.json()) as {
+    choices?: { message?: { content?: string } }[]
+  }
+  return json.choices?.[0]?.message?.content ?? ''
+}
+
 const CATEGORIES = ['top', 'pants', 'skirt', 'outer', 'shoes', 'bag', 'accessory']
 const SEASONS = ['spring', 'summer', 'autumn', 'winter', 'all']
 const OCCASIONS = ['commute', 'casual', 'sport', 'date', 'formal', 'home']
@@ -32,9 +109,8 @@ const PATTERNS = ['solid', 'striped', 'plaid', 'print']
 
 /** VLM：识别衣物照片 */
 export async function recognizeClothingImage(imageData: string): Promise<RecognizeResult> {
-  const zai = await ZAI.create()
-  const completion = await zai.chat.completions.createVision({
-    messages: [
+  const raw = await zaiChat(
+    [
       {
         role: 'user',
         content: [
@@ -56,10 +132,9 @@ export async function recognizeClothingImage(imageData: string): Promise<Recogni
         ],
       },
     ],
-    thinking: { type: 'disabled' },
-  })
+    60_000 // 图片比纯文本慢，给足超时
+  )
 
-  const raw = completion.choices[0]?.message?.content ?? ''
   const parsed = extractJSON<Partial<RecognizeResult>>(raw)
   if (!parsed) throw new Error('AI 没能认出这件，手动填吧。')
 
@@ -88,7 +163,6 @@ export async function enhanceOutfitReasons(payload: {
   outfits: { key: string; itemNames: string[] }[]
 }): Promise<Record<string, { reason: string; styleTags: string[] }> | null> {
   try {
-    const zai = await ZAI.create()
     const weatherText = payload.weather
       ? `${payload.weather.temp}°C，${payload.weather.condition}，降水概率 ${payload.weather.precipProb}%`
       : '未知'
@@ -107,15 +181,7 @@ ${payload.outfits.map((o, i) => `${i + 1}. ${o.itemNames.join(' + ')}`).join('\n
 严格返回 JSON 数组（不要任何多余文本）：
 [{"index":1,"reason":"...","styleTags":["..."]}]`
 
-    const completion = (await Promise.race([
-      zai.chat.completions.create({
-        messages: [{ role: 'user', content: prompt }],
-        thinking: { type: 'disabled' },
-      }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 20000)),
-    ])) as Awaited<ReturnType<typeof zai.chat.completions.create>>
-
-    const raw = completion.choices[0]?.message?.content ?? ''
+    const raw = await zaiChat([{ role: 'user', content: prompt }], 20_000)
     const arr = extractJSON<{ index: number; reason: string; styleTags?: string[] }[]>(raw)
     if (!arr || !Array.isArray(arr)) return null
 
@@ -144,7 +210,6 @@ export async function parseSearchQuery(
   categoryLabels: { key: string; label: string }[],
 ): Promise<{ category?: string; color?: string; keywords: string[]; hint: string } | null> {
   try {
-    const zai = await ZAI.create()
     const prompt = `把这句找衣服的人话解析成 JSON。原句："${q}"
 
 类别可选：${categoryLabels.map((c) => `${c.key}=${c.label}`).join('、')}
@@ -153,16 +218,13 @@ export async function parseSearchQuery(
 严格返回 JSON（不要多余文本）：
 {"category":"类别key或空字符串","color":"颜色中文名或空字符串","keywords":["提取的其它关键词，如 条纹/衬衫/面试"],"hint":"一句 30 字内的中文，告诉用户你是怎么理解这句话的"}`
 
-    const completion = await Promise.race([
-      zai.chat.completions.create({
-        messages: [{ role: 'user', content: prompt }],
-        thinking: { type: 'disabled' },
-      }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 12000)),
-    ]) as Awaited<ReturnType<typeof zai.chat.completions.create>>
-
-    const raw = completion.choices[0]?.message?.content ?? ''
-    const parsed = extractJSON<{ category?: string; color?: string; keywords?: string[]; hint?: string }>(raw)
+    const raw = await zaiChat([{ role: 'user', content: prompt }], 12_000)
+    const parsed = extractJSON<{
+      category?: string
+      color?: string
+      keywords?: string[]
+      hint?: string
+    }>(raw)
     if (!parsed) return null
     return {
       category: parsed.category && CATEGORIES.includes(parsed.category) ? parsed.category : undefined,

@@ -149,8 +149,10 @@ export function ClothingFormSheet({ item }: { item: ClothingItem | null }) {
       toast({ title: '选个类别', description: '它得知道这是什么。' })
       return
     }
-    if (imageData && imageData.length > 900_000) {
-      toast({ title: '图片有点大', description: '重新拍一张试试。' })
+    // 图片在 compressImage() 里已压到长边 720px / JPEG 0.72，实测最坏也就 200KB 上下，
+    // 所以这里只是防呆兜底（正常永远碰不到），阈值放宽到 20MB
+    if (imageData && imageData.length > 20 * 1024 * 1024) {
+      toast({ title: '图片有点大', description: '超过 20MB 了，重新拍一张试试。' })
       return
     }
     setSaving(true)

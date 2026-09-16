@@ -1,6 +1,7 @@
 // 衣物列表 + 新增
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { saveImage, ImageTooLargeError } from '@/lib/storage'
 
 export async function GET(req: NextRequest) {
   try {
@@ -51,6 +52,8 @@ export async function POST(req: NextRequest) {
     if (!body?.category) {
       return NextResponse.json({ error: '类别不能为空' }, { status: 400 })
     }
+    // 图片：前端仍照原样传 base64 data URL，这里转存 R2 后只把地址写进库
+    const imageData = await saveImage(body.imageData)
     const item = await db.clothingItem.create({
       data: {
         name: body.name ?? null,
@@ -68,11 +71,15 @@ export async function POST(req: NextRequest) {
         storageStatus: body.storageStatus ?? 'wearing',
         storageLocation: body.storageLocation ?? null,
         notes: body.notes ?? null,
-        imageData: body.imageData ?? null,
+        imageData,
       },
     })
     return NextResponse.json({ item }, { status: 201 })
   } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : '创建失败' }, { status: 500 })
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : '创建失败' },
+      // 图太大是请求本身的问题，回 413 而不是 500
+      { status: e instanceof ImageTooLargeError ? 413 : 500 }
+    )
   }
 }
