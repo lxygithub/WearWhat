@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { recognizeClothingImage } from '@/lib/ww-ai'
 import { getSessionUser, unauthorized } from '@/lib/auth'
+import { aiConfigFromRequest } from '@/lib/ai-config'
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
     if (imageData.length > 4_500_000) {
       return NextResponse.json({ error: '图片太大了，压缩后再试' }, { status: 413 })
     }
-    const result = await recognizeClothingImage(imageData)
+    const result = await recognizeClothingImage(imageData, aiConfigFromRequest(req))
     return NextResponse.json({ result })
   } catch (e) {
     return NextResponse.json(

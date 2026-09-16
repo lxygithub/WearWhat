@@ -9,6 +9,7 @@ import type {
   WishlistEntry,
   WWUser,
 } from './types'
+import { configuredAIHeaders } from './ai-settings'
 
 // 401 全局处理：会话过期时回调（由 AuthGate 注册），排除 auth 接口自身
 let onUnauthorized: (() => void) | null = null
@@ -16,10 +17,15 @@ export function setUnauthorizedHandler(fn: () => void): void {
   onUnauthorized = fn
 }
 
-async function j<T>(url: string, init?: RequestInit): Promise<T> {
+async function j<T>(url: string, init?: RequestInit, useUserAI = false): Promise<T> {
+  const headers = new Headers(init?.headers)
+  headers.set('Content-Type', 'application/json')
+  if (useUserAI) {
+    for (const [name, value] of new Headers(configuredAIHeaders())) headers.set(name, value)
+  }
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json' },
     ...init,
+    headers,
   })
   let data: unknown = null
   try {
@@ -86,7 +92,7 @@ export const api = {
     j<{ result: RecognizeResult }>('/api/clothing/recognize', {
       method: 'POST',
       body: JSON.stringify({ imageData }),
-    }),
+    }, true),
 
   recommend: (occasion: string, location?: { lat: number; lon: number; city: string }) =>
     j<RecommendResponse>('/api/outfits/recommend', {
@@ -97,7 +103,7 @@ export const api = {
         lon: location?.lon,
         city: location?.city,
       }),
-    }),
+    }, true),
 
   getOutfits: (month?: string) =>
     j<{ outfits: OutfitRecord[] }>(`/api/outfits${month ? `?month=${month}` : ''}`),
@@ -115,7 +121,7 @@ export const api = {
 
   stats: () => j<{ stats: StatsData }>('/api/stats'),
 
-  search: (q: string) => j<{ items: ClothingItem[]; hint: string }>(`/api/search?q=${encodeURIComponent(q)}`),
+  search: (q: string) => j<{ items: ClothingItem[]; hint: string }>(`/api/search?q=${encodeURIComponent(q)}`, undefined, true),
 
   weather: (lat: number, lon: number, city: string) =>
     j<{ weather: WeatherData }>(`/api/weather?lat=${lat}&lon=${lon}&city=${encodeURIComponent(city)}`),

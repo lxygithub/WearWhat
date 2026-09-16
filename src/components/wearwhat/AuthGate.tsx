@@ -19,7 +19,7 @@ export function AuthGate() {
       const s = useWW.getState()
       s.resetData()
       s.setUser(null)
-      s.setState({ authChecked: true })
+      useWW.setState({ authChecked: true })
     })
   }, [])
 

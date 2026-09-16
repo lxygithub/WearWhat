@@ -13,6 +13,7 @@
 // 调用方各自有兜底路径，不会把 500 抛给用户。
 
 import type { RecognizeResult } from '@/components/wearwhat/api'
+import type { AIConfig } from './ai-config'
 
 /** 从模型输出中鲁棒提取 JSON（容忍代码围栏/前后缀文本） */
 function extractJSON<T>(text: string): T | null {
@@ -44,7 +45,9 @@ interface ZaiConfig {
 
 let cachedConfig: ZaiConfig | undefined
 
-function resolveConfig(): ZaiConfig {
+function resolveConfig(override?: AIConfig): ZaiConfig {
+  // 用户配置仅存在该请求的内存中，不能写入模块级缓存，否则会串到下一位用户。
+  if (override) return override
   if (cachedConfig) return cachedConfig
 
   const rawBase = process.env.ZAI_BASE_URL?.trim()
@@ -74,9 +77,10 @@ interface ChatMessage {
  */
 async function zaiChat(
   messages: ChatMessage[],
-  timeoutMs = 30_000
+  timeoutMs = 30_000,
+  configOverride?: AIConfig,
 ): Promise<string> {
-  const config = resolveConfig()
+  const config = resolveConfig(configOverride)
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -108,7 +112,7 @@ const OCCASIONS = ['commute', 'casual', 'sport', 'date', 'formal', 'home']
 const PATTERNS = ['solid', 'striped', 'plaid', 'print']
 
 /** VLM：识别衣物照片 */
-export async function recognizeClothingImage(imageData: string): Promise<RecognizeResult> {
+export async function recognizeClothingImage(imageData: string, configOverride?: AIConfig): Promise<RecognizeResult> {
   const raw = await zaiChat(
     [
       {
@@ -132,7 +136,8 @@ export async function recognizeClothingImage(imageData: string): Promise<Recogni
         ],
       },
     ],
-    60_000 // 图片比纯文本慢，给足超时
+    60_000, // 图片比纯文本慢，给足超时
+    configOverride,
   )
 
   const parsed = extractJSON<Partial<RecognizeResult>>(raw)
@@ -161,7 +166,7 @@ export async function enhanceOutfitReasons(payload: {
   occasion: string
   weather: { temp: number; condition: string; precipProb: number } | null
   outfits: { key: string; itemNames: string[] }[]
-}): Promise<Record<string, { reason: string; styleTags: string[] }> | null> {
+}, configOverride?: AIConfig): Promise<Record<string, { reason: string; styleTags: string[] }> | null> {
   try {
     const weatherText = payload.weather
       ? `${payload.weather.temp}°C，${payload.weather.condition}，降水概率 ${payload.weather.precipProb}%`
@@ -181,7 +186,7 @@ ${payload.outfits.map((o, i) => `${i + 1}. ${o.itemNames.join(' + ')}`).join('\n
 严格返回 JSON 数组（不要任何多余文本）：
 [{"index":1,"reason":"...","styleTags":["..."]}]`
 
-    const raw = await zaiChat([{ role: 'user', content: prompt }], 20_000)
+    const raw = await zaiChat([{ role: 'user', content: prompt }], 20_000, configOverride)
     const arr = extractJSON<{ index: number; reason: string; styleTags?: string[] }[]>(raw)
     if (!arr || !Array.isArray(arr)) return null
 
@@ -208,6 +213,7 @@ ${payload.outfits.map((o, i) => `${i + 1}. ${o.itemNames.join(' + ')}`).join('\n
 export async function parseSearchQuery(
   q: string,
   categoryLabels: { key: string; label: string }[],
+  configOverride?: AIConfig,
 ): Promise<{ category?: string; color?: string; keywords: string[]; hint: string } | null> {
   try {
     const prompt = `把这句找衣服的人话解析成 JSON。原句："${q}"
@@ -218,7 +224,7 @@ export async function parseSearchQuery(
 严格返回 JSON（不要多余文本）：
 {"category":"类别key或空字符串","color":"颜色中文名或空字符串","keywords":["提取的其它关键词，如 条纹/衬衫/面试"],"hint":"一句 30 字内的中文，告诉用户你是怎么理解这句话的"}`
 
-    const raw = await zaiChat([{ role: 'user', content: prompt }], 12_000)
+    const raw = await zaiChat([{ role: 'user', content: prompt }], 12_000, configOverride)
     const parsed = extractJSON<{
       category?: string
       color?: string

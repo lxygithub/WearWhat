@@ -5,6 +5,7 @@ import { fetchWeather } from '@/lib/ww-weather'
 import { recommendOutfits } from '@/lib/ww-engine'
 import { enhanceOutfitReasons } from '@/lib/ww-ai'
 import { getSessionUser, unauthorized } from '@/lib/auth'
+import { aiConfigFromRequest } from '@/lib/ai-config'
 import { occasionLabel } from '@/components/wearwhat/constants'
 import type { WeatherData } from '@/components/wearwhat/types'
 
@@ -83,7 +84,7 @@ export async function POST(req: NextRequest) {
           (i) => `${i.color ?? ''}${i.name ?? ''}` || '单品',
         ),
       })),
-    })
+    }, aiConfigFromRequest(req))
 
     const outfits = result.outfits.map((o) => {
       const e = enhanced?.[o.key]

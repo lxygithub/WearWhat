@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { parseSearchQuery } from '@/lib/ww-ai'
 import { CATEGORIES } from '@/components/wearwhat/constants'
 import { getSessionUser, unauthorized } from '@/lib/auth'
+import { aiConfigFromRequest } from '@/lib/ai-config'
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,7 +18,11 @@ export async function GET(req: NextRequest) {
     }
 
     // 1. 先让 LLM 理解这句话（失败则走兜底）
-    const parsed = await parseSearchQuery(q, CATEGORIES.map((c) => ({ key: c.key, label: c.label })))
+    const parsed = await parseSearchQuery(
+      q,
+      CATEGORIES.map((c) => ({ key: c.key, label: c.label })),
+      aiConfigFromRequest(req),
+    )
 
     let items: Awaited<ReturnType<typeof db.clothingItem.findMany>> = []
     let hint = parsed?.hint ?? ''

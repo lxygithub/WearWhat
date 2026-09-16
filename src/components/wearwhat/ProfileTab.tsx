@@ -3,7 +3,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Heart, LogOut, MapPin, Plus, Trash2 } from 'lucide-react'
+import { Bot, Eye, EyeOff, Heart, KeyRound, LogOut, MapPin, Plus, Save, Trash2 } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { api } from './api'
 import { CITIES, categoryIcon, categoryLabel, colorHex } from './constants'
@@ -13,6 +13,8 @@ import { EmptyHint, SectionTitle, WWSkeleton } from './ui-bits'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
+import { clearAISettings, getAISettings, saveAISettings, type AISettings } from './ai-settings'
+import { Input } from '@/components/ui/input'
 
 export function ProfileTab() {
   const { stats, items, city, setCity, user, setUser, resetData } = useWW()
@@ -172,6 +174,8 @@ export function ProfileTab() {
 
       <WishlistSection />
 
+      <AISettingsSection />
+
       {/* 设置 */}
       <section>
         <SectionTitle title="设置" />
@@ -211,6 +215,132 @@ export function ProfileTab() {
         </div>
       </section>
     </div>
+  )
+}
+
+function AISettingsSection() {
+  const [settings, setSettings] = useState<AISettings>(() => getAISettings())
+  const [showKey, setShowKey] = useState(false)
+
+  const update = (key: keyof AISettings, value: string) => {
+    setSettings((previous) => ({ ...previous, [key]: value }))
+  }
+
+  const save = () => {
+    const baseUrl = settings.baseUrl.trim()
+    const apiKey = settings.apiKey.trim()
+    if (!baseUrl || !apiKey) {
+      toast({ title: '服务地址和 API Key 都要填', variant: 'destructive' })
+      return
+    }
+    try {
+      const url = new URL(baseUrl)
+      if (url.protocol !== 'https:') throw new Error()
+    } catch {
+      toast({ title: '服务地址需要是 HTTPS URL', variant: 'destructive' })
+      return
+    }
+    const next = { ...settings, baseUrl, apiKey, model: settings.model.trim() }
+    saveAISettings(next)
+    setSettings(next)
+    toast({ title: '模型配置已保存', description: '下一次 AI 请求会使用这套配置。' })
+  }
+
+  const clear = () => {
+    clearAISettings()
+    setSettings({ baseUrl: '', apiKey: '', model: '' })
+    toast({ title: '已清除自定义模型', description: '后续会使用部署方配置的默认模型。' })
+  }
+
+  return (
+    <section>
+      <SectionTitle title="AI 模型" />
+      <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+        <div className="flex gap-2.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+            <Bot className="h-4.5 w-4.5" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-stone-700">自带云端大模型</p>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-stone-400">
+              支持 OpenAI 兼容接口，如 DeepSeek、OpenAI、智谱。用于识图、搭配理由和智能搜索。
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          <label className="block">
+            <span className="mb-1.5 block text-[11px] font-medium text-stone-500">服务地址</span>
+            <Input
+              value={settings.baseUrl}
+              onChange={(event) => update('baseUrl', event.target.value)}
+              placeholder="https://api.deepseek.com"
+              inputMode="url"
+              autoCapitalize="none"
+              autoCorrect="off"
+              className="h-10 text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-[11px] font-medium text-stone-500">API Key</span>
+            <div className="relative">
+              <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-400" />
+              <Input
+                value={settings.apiKey}
+                onChange={(event) => update('apiKey', event.target.value)}
+                type={showKey ? 'text' : 'password'}
+                placeholder="sk-..."
+                autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                className="h-10 pl-8 pr-10 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowKey((visible) => !visible)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-stone-400 hover:text-stone-600"
+                aria-label={showKey ? '隐藏 API Key' : '显示 API Key'}
+              >
+                {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-[11px] font-medium text-stone-500">模型名 <span className="font-normal text-stone-300">（可选）</span></span>
+            <Input
+              value={settings.model}
+              onChange={(event) => update('model', event.target.value)}
+              placeholder="deepseek-chat / gpt-4o-mini"
+              autoCapitalize="none"
+              autoCorrect="off"
+              className="h-10 text-sm"
+            />
+          </label>
+        </div>
+
+        <div className="mt-3 rounded-xl bg-stone-50 px-3 py-2 text-[10px] leading-relaxed text-stone-400">
+          API Key 只保存在此浏览器，不写入账号或数据库；调用 AI 时通过 HTTPS 临时转发到你填写的服务。
+        </div>
+        <div className="mt-3 flex gap-2">
+          <button
+            type="button"
+            onClick={save}
+            className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-stone-900 text-xs font-bold text-white transition-colors hover:bg-stone-700"
+          >
+            <Save className="h-3.5 w-3.5" />
+            保存并启用
+          </button>
+          <button
+            type="button"
+            onClick={clear}
+            className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-stone-200 px-3 text-xs font-bold text-stone-500 transition-colors hover:border-red-200 hover:text-red-500"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            清除
+          </button>
+        </div>
+      </div>
+    </section>
   )
 }
 
