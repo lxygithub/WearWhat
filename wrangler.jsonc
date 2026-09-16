@@ -1,0 +1,43 @@
+// Cloudflare Workers 部署配置（配合 @opennextjs/cloudflare 使用）
+// 参考：https://opennext.js/cloudflare
+{
+  // Worker 名称：部署后的默认访问地址为 https://wearwhat.<你的子域>.workers.dev
+  "name": "wearwhat",
+
+  // 入口文件：opennextjs-cloudflare build 会把 Next.js 应用打包成这个 Worker 脚本
+  "main": ".open-next/worker.js",
+
+  // 兼容日期：决定 Worker 运行时启用哪些行为（@opennextjs/cloudflare 官方推荐值）
+  "compatibility_date": "2024-09-23",
+
+  // 兼容标志：
+  // - nodejs_compat：允许 Worker 使用 Node.js API 子集（Next.js 运行时依赖）
+  // - global_fetch_strictly_public：让全局 fetch 只走公网出口，不会命中同 Zone 内部路由
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
+
+  // 静态资产：Next.js 的静态文件（.open-next/assets）由 Workers Assets 直接托管，
+  // 绑定名为 ASSETS，Worker 内部可通过 env.ASSETS 读取
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  // D1 数据库绑定：数据库为 SQLite 方言，与本地 prisma/schema.prisma 兼容。
+  // database_id 需要先执行 `bunx wrangler d1 create wearwhat-db`，
+  // 然后把输出中的 database_id 粘贴替换进来（见 DEPLOY.md）
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "wearwhat-db",
+      "database_id": "REPLACE_WITH_YOUR_D1_ID"
+    }
+  ],
+
+  // 可观测性：开启后在 Cloudflare 控制台可查看 Worker 的日志与指标
+  "observability": {
+    "enabled": true
+  }
+}
