@@ -209,6 +209,90 @@ ${payload.outfits.map((o, i) => `${i + 1}. ${o.itemNames.join(' + ')}`).join('\n
   }
 }
 
+// ---- 衣橱问答（LLM） ----
+
+export interface AskCompactItem {
+  id: string
+  name: string
+  category: string
+  color: string | null
+  pattern: string | null
+  material: string | null
+  seasons: string[]
+  occasions: string[]
+  storageStatus: string
+  storageLocation: string | null
+  wearCount: number
+  lastWornAt: string | null
+  brand: string | null
+  price: number | null
+}
+
+export interface AskAnswer {
+  answer: string
+  itemIds: string[]
+  followUps: string[]
+}
+
+/** LLM：衣橱问答 —— 只允许基于用户自己的衣橱数据回答，杜绝幻觉 */
+export async function answerWardrobeQuestion(
+  payload: {
+    question: string
+    history: { role: 'user' | 'assistant'; content: string }[]
+    season: string
+    weatherText: string | null
+    items: AskCompactItem[]
+    wishlist: { name: string; category: string | null; expectedPrice: number | null; priority: number }[]
+  },
+  configOverride?: AIConfig,
+): Promise<AskAnswer> {
+  const today = new Date().toISOString().slice(0, 10)
+  const seasonCN = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' }[payload.season] ?? payload.season
+  const historyText = payload.history.length
+    ? payload.history.map((h) => `${h.role === 'user' ? '用户' : '你'}：${h.content}`).join('\n')
+    : '（无，这是第一问）'
+
+  const prompt = `你是一个毒舌但贴心的私人衣橱助手（品牌人格：别问，问就是它）。
+你只能依据【衣橱数据】【愿望清单】【天气】回答，禁止编造数据里不存在的东西。
+今天是 ${today}，当前季节：${seasonCN}。
+天气：${payload.weatherText ?? '未知'}
+
+【衣橱数据】
+${JSON.stringify(payload.items)}
+
+【愿望清单】
+${payload.wishlist.length ? JSON.stringify(payload.wishlist) : '（空）'}
+
+【最近的对话】
+${historyText}
+
+用户的问题：${payload.question}
+
+要求：
+- answer：直接回答问题。统计类给确切数字，找衣服类报名字和收纳位置，建议类给出具体单品名。60 字内中文，语气轻松带一点梗；数据里没有的就直说没有。
+- itemIds：从衣橱数据里挑出与回答直接相关的单品 id（最多 6 个，没有就空数组）。
+- followUps：2-3 个用户可能接着问的短问题（每条 12 字内中文）。
+
+严格返回 JSON（不要任何多余文本）：
+{"answer":"...","itemIds":["..."],"followUps":["..."]}`
+
+  const raw = await zaiChat([{ role: 'user', content: prompt }], 25_000, configOverride)
+  const parsed = extractJSON<Partial<AskAnswer>>(raw)
+  if (!parsed || typeof parsed.answer !== 'string' || !parsed.answer.trim()) {
+    throw new Error('AI 没答上来')
+  }
+  const validIds = new Set(payload.items.map((i) => i.id))
+  return {
+    answer: parsed.answer.trim().slice(0, 300),
+    itemIds: Array.isArray(parsed.itemIds)
+      ? parsed.itemIds.filter((x): x is string => typeof x === 'string' && validIds.has(x)).slice(0, 6)
+      : [],
+    followUps: Array.isArray(parsed.followUps)
+      ? parsed.followUps.filter((x): x is string => typeof x === 'string' && x.trim()).slice(0, 3)
+      : [],
+  }
+}
+
 /** LLM：自然语言搜索 —— 把人话解析成结构化条件 */
 export async function parseSearchQuery(
   q: string,

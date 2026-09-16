@@ -16,6 +16,7 @@ import { ClothingFormSheet } from './ClothingFormSheet'
 import { ClothingDetailSheet } from './ClothingDetailSheet'
 import { RecommendPanel } from './RecommendPanel'
 import { DaySheet } from './DaySheet'
+import { AskSheet } from './AskSheet'
 
 const TABS: { key: Tab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { key: 'home', label: '首页', icon: Home },
@@ -101,6 +102,7 @@ export function WearWhatApp() {
         {sheet?.type === 'detail' && <ClothingDetailSheet itemId={sheet.item.id} />}
         {sheet?.type === 'recommend' && <RecommendPanel initialOccasion={sheet.occasion} />}
         {sheet?.type === 'day' && <DaySheet date={sheet.date} />}
+        {sheet?.type === 'ask' && <AskSheet />}
       </div>
     </div>
   )

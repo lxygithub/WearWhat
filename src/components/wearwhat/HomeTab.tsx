@@ -3,7 +3,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { ChevronRight, RefreshCcw, Sparkles, Wand2 } from 'lucide-react'
+import { ChevronRight, MessageCircleQuestion, RefreshCcw, Sparkles, Wand2 } from 'lucide-react'
 import { COPY, OCCASIONS, SEASONS, occasionLabel } from './constants'
 import { parseList, todayStr, type OccasionKey } from './types'
 import { useWW } from './store'
@@ -22,6 +22,24 @@ export function HomeTab() {
     <div className="space-y-5">
       {/* 天气卡 */}
       <WeatherHero />
+
+      {/* 衣橱问答入口 */}
+      <button
+        type="button"
+        onClick={() => openSheet({ type: 'ask' })}
+        className="flex w-full items-center gap-3 rounded-2xl border border-stone-200 bg-white p-4 text-left shadow-sm transition-all hover:border-orange-300 active:scale-[0.99]"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-600/10">
+          <MessageCircleQuestion className="h-5 w-5 text-orange-600" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-bold text-stone-800">问一问衣橱</span>
+          <span className="mt-0.5 block truncate text-xs text-stone-400">
+            我有几件白衬衫？哪件最久没穿？
+          </span>
+        </span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-stone-300" />
+      </button>
 
       {/* 今日记录状态 / 快速记录 */}
       {todayOutfit ? (

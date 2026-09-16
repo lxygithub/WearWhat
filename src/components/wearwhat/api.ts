@@ -126,12 +126,38 @@ export const api = {
   weather: (lat: number, lon: number, city: string) =>
     j<{ weather: WeatherData }>(`/api/weather?lat=${lat}&lon=${lon}&city=${encodeURIComponent(city)}`),
 
+  // 衣橱问答：LLM 实时答，离线时服务端自动降级本地统计
+  ask: (
+    question: string,
+    context?: {
+      weather?: WeatherData | null
+      season?: string
+      history?: { role: 'user' | 'assistant'; content: string }[]
+    },
+  ) =>
+    j<AskResponse>('/api/ask', {
+      method: 'POST',
+      body: JSON.stringify({
+        question,
+        weather: context?.weather ?? undefined,
+        season: context?.season,
+        history: context?.history,
+      }),
+    }, true),
+
   getWishlist: () => j<{ entries: WishlistEntry[] }>('/api/wishlist'),
 
   createWishlist: (body: { name: string; category?: string; expectedPrice?: number; notes?: string }) =>
     j<{ entry: WishlistEntry }>('/api/wishlist', { method: 'POST', body: JSON.stringify(body) }),
 
   deleteWishlist: (id: string) => j<{ ok: boolean }>(`/api/wishlist/${id}`, { method: 'DELETE' }),
+}
+
+export interface AskResponse {
+  answer: string
+  followUps: string[]
+  source: 'ai' | 'local'
+  items: Pick<ClothingItem, 'id' | 'name' | 'imageData' | 'category' | 'color'>[]
 }
 
 export interface RecognizeResult {
