@@ -11,6 +11,7 @@ import type {
   StatsData,
   WeatherData,
   WishlistEntry,
+  WWUser,
 } from './types'
 
 export type Tab = 'home' | 'closet' | 'calendar' | 'profile'
@@ -27,6 +28,8 @@ const CITY_KEY = 'wearwhat.city'
 interface WWStore {
   ready: boolean
   tab: Tab
+  user: WWUser | null
+  authChecked: boolean
   items: ClothingItem[]
   itemsLoading: boolean
   outfits: OutfitRecord[]
@@ -44,6 +47,9 @@ interface WWStore {
   setTab: (t: Tab) => void
   openSheet: (s: Sheet) => void
   closeSheet: () => void
+
+  setUser: (u: WWUser | null) => void
+  resetData: () => void
 
   init: () => Promise<void>
   loadItems: () => Promise<void>
@@ -70,6 +76,8 @@ export function currentCity(): string {
 export const useWW = create<WWStore>((set, get) => ({
   ready: false,
   tab: 'home',
+  user: null,
+  authChecked: false,
   items: [],
   itemsLoading: false,
   outfits: [],
@@ -87,6 +95,21 @@ export const useWW = create<WWStore>((set, get) => ({
   setTab: (t) => set({ tab: t }),
   openSheet: (s) => set({ sheet: s }),
   closeSheet: () => set({ sheet: null }),
+
+  setUser: (u) => set({ user: u }),
+
+  // 登出 / 会话过期时清空本地数据，回到登录前状态
+  resetData: () =>
+    set({
+      ready: false,
+      tab: 'home',
+      items: [],
+      outfits: [],
+      stats: null,
+      wishlist: [],
+      weather: null,
+      sheet: null,
+    }),
 
   init: async () => {
     const city = currentCity()

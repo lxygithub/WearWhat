@@ -1,16 +1,20 @@
-// 衣物列表 + 新增
+// 衣物列表 + 新增（按登录用户隔离）
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getSessionUser, unauthorized } from '@/lib/auth'
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getSessionUser()
+    if (!user) return unauthorized()
+
     const { searchParams } = new URL(req.url)
     const category = searchParams.get('category') || undefined
     const season = searchParams.get('season') || undefined
     const status = searchParams.get('status') || undefined
     const q = searchParams.get('q') || undefined
 
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = { userId: user.id }
     if (category) where.category = category
     if (status) where.storageStatus = status
     if (q) {
@@ -47,12 +51,16 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getSessionUser()
+    if (!user) return unauthorized()
+
     const body = await req.json()
     if (!body?.category) {
       return NextResponse.json({ error: '类别不能为空' }, { status: 400 })
     }
     const item = await db.clothingItem.create({
       data: {
+        userId: user.id,
         name: body.name ?? null,
         category: String(body.category),
         color: body.color ?? null,

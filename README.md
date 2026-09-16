@@ -7,6 +7,7 @@
 ## 功能
 
 - **衣物录入**：手机拍照后 AI 自动识别品类、颜色、材质等属性，也可手动填写
+- **账号系统**：邮箱注册（验证码）/ 登录 / 找回密码，数据按账号隔离；JWT httpOnly cookie 会话
 - **衣橱管理**：分类 / 季节 / 收纳状态筛选，支持换季收纳、洗涤中、维修中等状态流转
 - **AI 搭配推荐**：结合实时天气与场合，每日生成 3 套搭配（规则引擎打分 + LLM 推荐理由），支持单件替换
 - **穿着日历**：月视图记录每天穿搭，自动累计穿着次数与最近穿着时间
@@ -17,7 +18,8 @@
 ## 技术栈
 
 - Next.js 16（App Router）+ TypeScript + Tailwind CSS 4 + shadcn/ui
-- Prisma ORM：本地开发用 SQLite，线上 Cloudflare D1（同一套 SQL 方言，见 `migrations/0001_init.sql`）
+- Prisma ORM：本地开发用 SQLite，线上 Cloudflare D1（同一套 SQL 方言，见 `migrations/0001_init.sql`、`migrations/0002_auth.sql`）
+- 认证：`jose`（JWT）+ `bcryptjs`，Workers 兼容；邮件验证码走 Resend HTTP API（开发模式自动回显）
 - 天气：Open-Meteo（免 Key，带内存缓存）
 - AI：z-ai-web-dev-sdk（VLM 衣物识别 / LLM 搭配理由与搜索解析），均带超时降级
 

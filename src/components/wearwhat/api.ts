@@ -7,7 +7,14 @@ import type {
   StatsData,
   WeatherData,
   WishlistEntry,
+  WWUser,
 } from './types'
+
+// 401 全局处理：会话过期时回调（由 AuthGate 注册），排除 auth 接口自身
+let onUnauthorized: (() => void) | null = null
+export function setUnauthorizedHandler(fn: () => void): void {
+  onUnauthorized = fn
+}
 
 async function j<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -21,6 +28,7 @@ async function j<T>(url: string, init?: RequestInit): Promise<T> {
     data = {}
   }
   if (!res.ok) {
+    if (res.status === 401 && !url.startsWith('/api/auth/')) onUnauthorized?.()
     const msg = (data as { error?: string })?.error || `请求失败 (${res.status})`
     throw new Error(msg)
   }
@@ -35,6 +43,27 @@ export interface ItemQuery {
 }
 
 export const api = {
+  // ---- 账号 ----
+  authSendCode: (email: string, type: 'register' | 'reset') =>
+    j<{ ok: boolean; devCode?: string }>('/api/auth/send-code', {
+      method: 'POST',
+      body: JSON.stringify({ email, type }),
+    }),
+
+  authRegister: (body: { email: string; password: string; code: string; name?: string }) =>
+    j<{ user: WWUser }>('/api/auth/register', { method: 'POST', body: JSON.stringify(body) }),
+
+  authLogin: (email: string, password: string) =>
+    j<{ user: WWUser }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+
+  authLogout: () => j<{ ok: boolean }>('/api/auth/logout', { method: 'POST' }),
+
+  authMe: () => j<{ user: WWUser }>('/api/auth/me'),
+
+  authResetPassword: (body: { email: string; code: string; newPassword: string }) =>
+    j<{ ok: boolean }>('/api/auth/reset-password', { method: 'POST', body: JSON.stringify(body) }),
+
+  // ---- 衣物 ----
   getItems: (query?: ItemQuery) => {
     const p = new URLSearchParams()
     if (query?.category) p.set('category', query.category)

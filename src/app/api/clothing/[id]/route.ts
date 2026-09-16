@@ -1,10 +1,25 @@
-// 衣物更新 / 删除
+// 衣物更新 / 删除（仅限本人衣物）
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getSessionUser, unauthorized } from '@/lib/auth'
+
+async function ownedItem(userId: string, id: string) {
+  const item = await db.clothingItem.findUnique({ where: { id } })
+  if (!item || item.userId !== userId) return null
+  return item
+}
 
 export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
+    const user = await getSessionUser()
+    if (!user) return unauthorized()
+
     const { id } = await ctx.params
+    const existing = await ownedItem(user.id, id)
+    if (!existing) {
+      return NextResponse.json({ error: '衣物不存在' }, { status: 404 })
+    }
+
     const body = await req.json()
 
     const data: Record<string, unknown> = {}
@@ -27,7 +42,15 @@ export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string 
 
 export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
+    const user = await getSessionUser()
+    if (!user) return unauthorized()
+
     const { id } = await ctx.params
+    const existing = await ownedItem(user.id, id)
+    if (!existing) {
+      return NextResponse.json({ error: '衣物不存在' }, { status: 404 })
+    }
+
     await db.clothingItem.delete({ where: { id } })
     return NextResponse.json({ ok: true })
   } catch (e) {

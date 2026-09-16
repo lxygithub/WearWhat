@@ -1,6 +1,7 @@
-// 衣橱统计
+// 衣橱统计（按登录用户）
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getSessionUser, unauthorized } from '@/lib/auth'
 
 function dateStr(d: Date): string {
   const y = d.getFullYear()
@@ -11,13 +12,19 @@ function dateStr(d: Date): string {
 
 export async function GET() {
   try {
-    const items = await db.clothingItem.findMany({ orderBy: { createdAt: 'desc' } })
+    const user = await getSessionUser()
+    if (!user) return unauthorized()
+
+    const items = await db.clothingItem.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'desc' },
+    })
     const active = items.filter((i) => i.storageStatus !== 'discarded')
 
     const since = new Date(Date.now() - 30 * 86400000)
     const sinceStr = dateStr(since)
     const recentOutfits = await db.outfit.findMany({
-      where: { date: { gte: sinceStr } },
+      where: { userId: user.id, date: { gte: sinceStr } },
       include: { items: true },
     })
 

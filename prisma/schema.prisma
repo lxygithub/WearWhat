@@ -10,6 +10,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// 用户（邮箱注册）
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  // bcrypt 哈希
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// 邮箱验证码（注册 / 找回密码）
+model VerificationCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  // register / reset
+  type      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, type])
+}
+
 // 衣物单品
 model ClothingItem {
   id              String    @id @default(cuid())

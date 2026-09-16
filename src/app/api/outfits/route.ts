@@ -1,14 +1,18 @@
-// 穿搭记录：按月查询 / 新建（同步累计穿着次数）
+// 穿搭记录：按月查询 / 新建（同步累计穿着次数，按登录用户隔离）
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getSessionUser, unauthorized } from '@/lib/auth'
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getSessionUser()
+    if (!user) return unauthorized()
+
     const { searchParams } = new URL(req.url)
     const month = searchParams.get('month') // YYYY-MM
     const where = month
-      ? { date: { gte: `${month}-01`, lte: `${month}-31` } }
-      : undefined
+      ? { userId: user.id, date: { gte: `${month}-01`, lte: `${month}-31` } }
+      : { userId: user.id }
 
     const outfits = await db.outfit.findMany({
       where,
@@ -32,6 +36,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getSessionUser()
+    if (!user) return unauthorized()
+
     const body = await req.json()
     const { date, occasion, itemIds, notes, source, weather } = body ?? {}
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -42,7 +49,7 @@ export async function POST(req: NextRequest) {
     }
 
     const exists = await db.clothingItem.findMany({
-      where: { id: { in: itemIds } },
+      where: { id: { in: itemIds }, userId: user.id },
       select: { id: true },
     })
     if (exists.length === 0) {
@@ -51,6 +58,7 @@ export async function POST(req: NextRequest) {
 
     const outfit = await db.outfit.create({
       data: {
+        userId: user.id,
         date,
         occasion: occasion ?? null,
         notes: notes ?? null,

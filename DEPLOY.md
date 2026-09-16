@@ -104,6 +104,35 @@ bun run cf:deploy
   引擎层（`src/lib/ww-engine.ts`）与 API 路由无需改动。
 - 三层 AI 均有降级策略：不替换也不会 500，只是识别/理由/语义搜索退化为规则结果。
 
+### 账号系统（邮箱注册 / 登录 / 找回密码）
+
+- 会话：JWT（`jose`，HS256，30 天）存在 httpOnly cookie `ww_session`；
+  密码用 `bcryptjs` 哈希。两个库均为纯 JS / Web Crypto 实现，Workers 兼容。
+- 生产环境**必须**设置 JWT 签名密钥（泄露即全员可伪造登录，务必随机）：
+
+  ```bash
+  # 生成随机密钥
+  openssl rand -base64 32
+  # 写入 Worker secret
+  bunx wrangler secret put AUTH_SECRET
+  ```
+
+- 邮件发送：走 Resend HTTP API（fetch 实现，Workers 友好）。生产环境需要：
+
+  ```bash
+  bunx wrangler secret put RESEND_API_KEY   # resend.com 申请，免费额度 100 封/天
+  bunx wrangler secret put MAIL_FROM        # 如 WearWhat <noreply@你的域名>
+  ```
+
+  - 用 `onboarding@resend.dev` 默认发件人时只能发给自己注册的邮箱；正式使用需在 Resend
+    验证自己的域名后更新 `MAIL_FROM`。
+  - **未配置 RESEND_API_KEY 时**：开发模式（`bun run dev`）验证码直接返回给前端并自动填入、
+    同时打印到服务端日志，方便联调；**生产模式会报「邮件服务未配置」**，注册/找回不可用。
+- 验证码：6 位数字，10 分钟有效，单次使用；同邮箱 60s 冷却 + 每小时 8 次上限
+  （进程内限流，Workers 多 isolate 下为尽力而为）。
+- 数据隔离：所有业务表带 `userId`，API 层从会话取当前用户并按其过滤/写入；
+  首个注册用户会自动接管种子演示数据（`userId=default`），生产空库不受影响。
+
 ## 常见问题（FAQ）
 
 | 现象 | 原因 | 解决 |
@@ -113,6 +142,8 @@ bun run cf:deploy
 | 构建或运行时报 `nodejs_compat` 相关错误 / `The 'nodejs_compat' compatibility flag` | `wrangler.jsonc` 的 `compatibility_flags` 缺 `nodejs_compat` | 确认配置含 `"nodejs_compat"` 且 `compatibility_date` ≥ 2024-09-23，重新构建部署 |
 | `wrangler d1 migrations` 报找不到迁移 | 迁移文件不在 `migrations/` 或不是 `.sql` | 确认 `migrations/0001_init.sql` 存在 |
 | `bun run dev` 启动变慢或报 miniflare 相关警告 | 本地装了 `@opennextjs/cloudflare` 后 `next.config.ts` 会尝试初始化 Cloudflare dev 绑定 | 属预期行为，失败会静默跳过，不影响 SQLite 本地开发 |
+| 注册/找回时报「邮件服务未配置」或收不到验证码 | 生产未配置 Resend，或 Resend 域名未验证 | 配置 `RESEND_API_KEY`/`MAIL_FROM`（见账号系统一节）；本地开发验证码直接回填 |
+| 登录后刷新又变回未登录 / 提示「请先登录」 | 生产未配置 `AUTH_SECRET` 或多个 Worker 实例密钥不一致 | `wrangler secret put AUTH_SECRET` 后重新部署 |
 
 ## 相关文件清单
 
@@ -120,5 +151,9 @@ bun run cf:deploy
 - `open-next.config.ts` —— @opennextjs/cloudflare 适配器配置
 - `next.config.ts` —— 追加了 `initOpenNextCloudflareForDev()`（静默失败，不影响本地 dev）
 - `migrations/0001_init.sql` —— D1 初始化迁移（4 张表 + 1 个索引）
+- `migrations/0002_auth.sql` —— 账号系统迁移（User + VerificationCode）
 - `src/lib/db-cf.ts` —— 生产用 D1 版 Prisma Client 工厂（本地开发不调用）
+- `src/lib/auth.ts` —— JWT 会话 / bcrypt 哈希 / 401 响应（Node 与 Workers 兼容）
+- `src/lib/mailer.ts` —— Resend 邮件发送 + 开发模式验证码回显
+- `src/lib/rate-limit.ts` —— 进程内限流（验证码冷却/频次）
 - `package.json` —— 新增 `cf:*`、`db:d1:*` 脚本

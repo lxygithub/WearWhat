@@ -5,6 +5,12 @@ export type SeasonKey = 'spring' | 'summer' | 'autumn' | 'winter' | 'all'
 export type OccasionKey = 'commute' | 'casual' | 'sport' | 'date' | 'formal' | 'home'
 export type StorageStatus = 'wearing' | 'stored' | 'laundry' | 'repair' | 'discarded'
 
+export interface WWUser {
+  id: string
+  email: string
+  name: string | null
+}
+
 export interface ClothingItem {
   id: string
   name: string | null

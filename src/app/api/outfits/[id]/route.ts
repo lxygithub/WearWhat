@@ -1,15 +1,19 @@
-// 删除穿搭记录（同步回退穿着次数）
+// 删除穿搭记录（同步回退穿着次数，仅限本人记录）
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getSessionUser, unauthorized } from '@/lib/auth'
 
 export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
+    const user = await getSessionUser()
+    if (!user) return unauthorized()
+
     const { id } = await ctx.params
     const outfit = await db.outfit.findUnique({
       where: { id },
       include: { items: true },
     })
-    if (!outfit) {
+    if (!outfit || outfit.userId !== user.id) {
       return NextResponse.json({ error: '记录不存在' }, { status: 404 })
     }
 

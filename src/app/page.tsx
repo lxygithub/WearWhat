@@ -1,5 +1,5 @@
-import { WearWhatApp } from '@/components/wearwhat/WearWhatApp'
+import { AuthGate } from '@/components/wearwhat/AuthGate'
 
 export default function Page() {
-  return <WearWhatApp />
+  return <AuthGate />
 }

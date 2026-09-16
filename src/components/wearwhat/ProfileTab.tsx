@@ -3,7 +3,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Heart, MapPin, Plus, Trash2 } from 'lucide-react'
+import { Heart, LogOut, MapPin, Plus, Trash2 } from 'lucide-react'
+import { toast } from '@/hooks/use-toast'
 import { api } from './api'
 import { CITIES, categoryIcon, categoryLabel, colorHex } from './constants'
 import type { ClothingItem } from './types'
@@ -14,10 +15,47 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { cn } from '@/lib/utils'
 
 export function ProfileTab() {
-  const { stats, items, city, setCity } = useWW()
+  const { stats, items, city, setCity, user, setUser, resetData } = useWW()
+
+  const logout = async () => {
+    try {
+      await api.authLogout()
+    } catch {
+      /* 就算请求失败也本地退出 */
+    }
+    resetData()
+    setUser(null)
+    toast({ title: '已退出登录，衣橱帮你锁好了' })
+  }
 
   return (
     <div className="space-y-5">
+      {/* 账号卡片 */}
+      {user ? (
+        <section>
+          <div
+            className="flex items-center gap-3.5 rounded-2xl p-4 shadow-sm"
+            style={{ background: 'linear-gradient(135deg, #f97316 0%, #ea580c 55%, #c2410c 100%)' }}
+          >
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/95 text-lg font-black text-orange-600 shadow-inner">
+              {(user.name || user.email).slice(0, 1).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold text-white">{user.name || '时髦的人'}</p>
+              <p className="truncate text-[11px] text-white/70">{user.email}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void logout()}
+              className="flex min-h-[36px] items-center gap-1 rounded-full bg-white/15 px-3 py-1.5 text-[11px] font-bold text-white transition-colors hover:bg-white/25"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              退出
+            </button>
+          </div>
+        </section>
+      ) : null}
+
       {/* 统计总览 */}
       <section>
         <SectionTitle title="衣橱统计" />
@@ -164,7 +202,7 @@ export function ProfileTab() {
         <div className="rounded-2xl border border-stone-200 bg-stone-50/70 p-4 text-center">
           <p className="text-sm font-black text-stone-700">今天穿什么 · WearWhat</p>
           <p className="mt-1 text-[11px] leading-relaxed text-stone-400">
-            v0.1.0 · Web 端（手机适配）
+            v0.2.0 · Web 端（手机适配）· 邮箱账号
             <br />
             数据库 SQLite / Cloudflare D1 Ready · AI 识别与搭配由大模型驱动
             <br />

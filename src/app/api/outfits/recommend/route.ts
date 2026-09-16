@@ -1,9 +1,10 @@
-// AI 搭配推荐：天气 → 规则引擎 → LLM 理由增强
+// AI 搭配推荐：天气 → 规则引擎 → LLM 理由增强（需登录，只推本人衣物）
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { fetchWeather } from '@/lib/ww-weather'
 import { recommendOutfits } from '@/lib/ww-engine'
 import { enhanceOutfitReasons } from '@/lib/ww-ai'
+import { getSessionUser, unauthorized } from '@/lib/auth'
 import { occasionLabel } from '@/components/wearwhat/constants'
 import type { WeatherData } from '@/components/wearwhat/types'
 
@@ -17,6 +18,9 @@ function seasonNow(): string {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getSessionUser()
+    if (!user) return unauthorized()
+
     const body = await req.json().catch(() => ({}))
     const occasion: string = body?.occasion ?? 'commute'
     const lat = typeof body?.lat === 'number' ? body.lat : 22.32
@@ -31,16 +35,16 @@ export async function POST(req: NextRequest) {
       weather = null
     }
 
-    // 2. 当季可用衣物
+    // 2. 当季可用衣物（本人的）
     const closet = await db.clothingItem.findMany({
-      where: { storageStatus: 'wearing' },
+      where: { userId: user.id, storageStatus: 'wearing' },
       orderBy: [{ createdAt: 'desc' }],
     })
 
     // 3. 最近 5 天穿着（用于重复惩罚）
     const fiveDaysAgo = new Date(Date.now() - 5 * 86400000)
     const recent = await db.outfit.findMany({
-      where: { createdAt: { gte: fiveDaysAgo } },
+      where: { userId: user.id, createdAt: { gte: fiveDaysAgo } },
       include: { items: true },
       orderBy: { createdAt: 'desc' },
       take: 10,

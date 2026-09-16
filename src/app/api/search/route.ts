@@ -3,9 +3,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { parseSearchQuery } from '@/lib/ww-ai'
 import { CATEGORIES } from '@/components/wearwhat/constants'
+import { getSessionUser, unauthorized } from '@/lib/auth'
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getSessionUser()
+    if (!user) return unauthorized()
+
     const { searchParams } = new URL(req.url)
     const q = (searchParams.get('q') || '').trim()
     if (!q) {
@@ -35,7 +39,10 @@ export async function GET(req: NextRequest) {
         })
       }
       if (AND.length > 0) {
-        items = await db.clothingItem.findMany({ where: { AND }, orderBy: { wearCount: 'desc' } })
+        items = await db.clothingItem.findMany({
+          where: { userId: user.id, AND },
+          orderBy: { wearCount: 'desc' },
+        })
       }
     }
 
@@ -55,7 +62,7 @@ export async function GET(req: NextRequest) {
       }
       if (OR.length > 0) {
         items = await db.clothingItem.findMany({
-          where: { OR },
+          where: { userId: user.id, OR },
           orderBy: { wearCount: 'desc' },
         })
         if (items.length > 0 && parsed.color) hint = `没有完全一样的，先给你看「${parsed.color}」相关的`
@@ -66,6 +73,7 @@ export async function GET(req: NextRequest) {
     if (items.length === 0) {
       items = await db.clothingItem.findMany({
         where: {
+          userId: user.id,
           OR: [
             { name: { contains: q } },
             { color: { contains: q } },
@@ -83,7 +91,7 @@ export async function GET(req: NextRequest) {
     if (items.length === 0) {
       const catGuess = CATEGORIES.find((c) => q.includes(c.label))
       if (catGuess) {
-        items = await db.clothingItem.findMany({ where: { category: catGuess.key } })
+        items = await db.clothingItem.findMany({ where: { userId: user.id, category: catGuess.key } })
         if (!hint) hint = `按类别「${catGuess.label}」查找`
       }
     }
