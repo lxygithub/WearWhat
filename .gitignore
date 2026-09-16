@@ -62,3 +62,6 @@ agent-ctx/
 # Prisma Workers 生成物：由 scripts/gen-workers-schema.mjs 在 cf:build 时重新生成
 src/generated/
 prisma/schema.workers.prisma
+
+# 运行时本地上传图片（未配置 R2 时落盘）
+upload/

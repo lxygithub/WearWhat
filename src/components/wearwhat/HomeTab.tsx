@@ -68,30 +68,34 @@ export function HomeTab() {
       {/* 今日推荐（桌面端通栏突出） */}
       <section className="md:col-span-2">
         <SectionTitle title="今日推荐" />
-        <div className="rounded-2xl border border-orange-200/70 bg-gradient-to-br from-orange-50 via-white to-amber-50/60 p-4 shadow-sm md:mx-auto md:max-w-3xl dark:border-orange-500/20 dark:from-orange-500/10 dark:via-card dark:to-amber-500/10">
-          <div className="flex flex-wrap gap-1.5">
-            {OCCASIONS.map((o) => (
+        <div className="rounded-2xl border border-orange-200/70 bg-gradient-to-br from-orange-50 via-white to-amber-50/60 p-4 shadow-sm md:p-5 dark:border-orange-500/20 dark:from-orange-500/10 dark:via-card dark:to-amber-500/10">
+          <div className="flex flex-col md:flex-row md:items-center md:gap-6">
+            <div className="flex flex-wrap gap-1.5 md:flex-1">
+              {OCCASIONS.map((o) => (
+                <button
+                  key={o.key}
+                  type="button"
+                  onClick={() => openSheet({ type: 'recommend', occasion: o.key as OccasionKey })}
+                  className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm transition-all hover:border-orange-300 hover:text-orange-600 active:scale-95 dark:hover:border-orange-500/40 dark:hover:text-orange-500"
+                >
+                  {o.icon} {o.label}
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 md:mt-0 md:w-64 md:shrink-0">
               <button
-                key={o.key}
                 type="button"
-                onClick={() => openSheet({ type: 'recommend', occasion: o.key as OccasionKey })}
-                className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm transition-all hover:border-orange-300 hover:text-orange-600 active:scale-95 dark:hover:border-orange-500/40 dark:hover:text-orange-500"
+                onClick={() => openSheet({ type: 'recommend' })}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-stone-900 py-3 text-sm font-bold text-white shadow-md transition-all hover:bg-stone-800 active:scale-[0.98] dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
               >
-                {o.icon} {o.label}
+                <Sparkles className="h-4 w-4" />
+                {todayOutfit ? '再换一批搭配' : '生成今日搭配'}
               </button>
-            ))}
+              <p className="mt-2 text-center text-[11px] text-muted-foreground/70">
+                {todayOutfit ? COPY.resultCta[1] : '按天气和场合，推荐 3 套可穿的'}
+              </p>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={() => openSheet({ type: 'recommend' })}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-stone-900 py-3 text-sm font-bold text-white shadow-md transition-all hover:bg-stone-800 active:scale-[0.98] dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
-          >
-            <Sparkles className="h-4 w-4" />
-            {todayOutfit ? '再换一批搭配' : '生成今日搭配'}
-          </button>
-          <p className="mt-2 text-center text-[11px] text-muted-foreground/70">
-            {todayOutfit ? COPY.resultCta[1] : '按天气和场合，推荐 3 套可穿的'}
-          </p>
         </div>
       </section>
 
