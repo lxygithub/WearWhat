@@ -90,7 +90,7 @@ export function DaySheet({ date }: { date: string }) {
           <DrawerHeader className="px-0 pb-2 pt-1 text-left">
             <DrawerTitle className="text-base font-black">
               {isToday ? '今天' : year !== new Date().getFullYear() ? `${year}年${month}月${day}日` : `${month}月${day}日`}
-              <span className="ml-1.5 text-sm font-medium text-stone-400">周{week}</span>
+              <span className="ml-1.5 text-sm font-medium text-muted-foreground/70">周{week}</span>
             </DrawerTitle>
             <DrawerDescription className="text-xs">
               {dayRecords.length > 0 ? '这天穿了这些。' : '这天还没记录，补上？'}
@@ -100,9 +100,9 @@ export function DaySheet({ date }: { date: string }) {
           {mode === 'view' ? (
             <div className="space-y-3">
               {dayRecords.map((rec) => (
-                <div key={rec.id} className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+                <div key={rec.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
                   <div className="mb-2.5 flex items-center justify-between">
-                    <span className="rounded-full bg-orange-600/10 px-2.5 py-1 text-[11px] font-bold text-orange-600">
+                    <span className="rounded-full bg-orange-600/10 px-2.5 py-1 text-[11px] font-bold text-orange-600 dark:bg-orange-500/10 dark:text-orange-500">
                       {rec.occasion ? occasionLabel(rec.occasion) : '日常'}
                     </span>
                     <button
@@ -117,7 +117,7 @@ export function DaySheet({ date }: { date: string }) {
                   <div className="flex flex-wrap gap-2">
                     {rec.items.map((it) => (
                       <div key={it.id} className="w-20">
-                        <div className="aspect-[3/4] overflow-hidden rounded-lg border border-stone-100 bg-stone-50">
+                        <div className="aspect-[3/4] overflow-hidden rounded-lg border border-border/60 bg-muted">
                           {it.imageData ? (
                             <img src={it.imageData} alt={it.name ?? ''} className="h-full w-full object-cover" />
                           ) : (
@@ -126,18 +126,18 @@ export function DaySheet({ date }: { date: string }) {
                             </div>
                           )}
                         </div>
-                        <p className="mt-1 truncate text-center text-[10px] text-stone-400">{it.name ?? categoryLabel(it.category)}</p>
+                        <p className="mt-1 truncate text-center text-[10px] text-muted-foreground/70">{it.name ?? categoryLabel(it.category)}</p>
                       </div>
                     ))}
                   </div>
-                  {rec.notes && <p className="mt-2 text-[11px] leading-relaxed text-stone-400">{rec.notes}</p>}
+                  {rec.notes && <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground/70">{rec.notes}</p>}
                 </div>
               ))}
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setMode('pick')}
-                  className="h-11 flex-1 rounded-xl border border-stone-200 bg-white text-sm font-bold text-stone-600 active:scale-[0.98]"
+                  className="h-11 flex-1 rounded-xl border border-border bg-card text-sm font-bold text-muted-foreground active:scale-[0.98]"
                 >
                   再记一套
                 </button>
@@ -145,7 +145,7 @@ export function DaySheet({ date }: { date: string }) {
                   <button
                     type="button"
                     onClick={() => openSheet({ type: 'recommend' })}
-                    className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-stone-900 text-sm font-bold text-white active:scale-[0.98]"
+                    className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-stone-900 text-sm font-bold text-white active:scale-[0.98] dark:bg-stone-100 dark:text-stone-900"
                   >
                     <Sparkles className="h-4 w-4" /> AI 搭配
                   </button>
@@ -155,7 +155,7 @@ export function DaySheet({ date }: { date: string }) {
           ) : (
             <div className="space-y-3">
               <div>
-                <p className="mb-1.5 text-[11px] font-bold text-stone-400">场合</p>
+                <p className="mb-1.5 text-[11px] font-bold text-muted-foreground/70">场合</p>
                 <div className="flex flex-wrap gap-1.5">
                   {OCCASIONS.map((o) => (
                     <Chip key={o.key} active={occ === o.key} onClick={() => setOcc(o.key as OccasionKey)}>
@@ -166,13 +166,13 @@ export function DaySheet({ date }: { date: string }) {
               </div>
 
               <div>
-                <p className="mb-1.5 text-[11px] font-bold text-stone-400">
-                  选单品 <span className="font-normal text-stone-300">（已选 {picked.size} 件）</span>
+                <p className="mb-1.5 text-[11px] font-bold text-muted-foreground/70">
+                  选单品 <span className="font-normal text-muted-foreground/60">（已选 {picked.size} 件）</span>
                 </p>
                 {activeItems.length === 0 ? (
                   <EmptyHint lines={COPY.emptyCloset} />
                 ) : (
-                  <div className="max-h-72 space-y-1.5 overflow-y-auto rounded-xl border border-stone-100 bg-stone-50/50 p-2 ww-scroll">
+                  <div className="max-h-72 space-y-1.5 overflow-y-auto rounded-xl border border-border/60 bg-muted/50 p-2 ww-scroll">
                     {activeItems.map((it) => {
                       const checked = picked.has(it.id)
                       return (
@@ -182,10 +182,10 @@ export function DaySheet({ date }: { date: string }) {
                           onClick={() => toggle(it.id)}
                           className={cn(
                             'flex w-full items-center gap-2.5 rounded-lg border px-2 py-1.5 text-left transition-colors',
-                            checked ? 'border-orange-400 bg-orange-50' : 'border-transparent bg-white hover:border-stone-200',
+                            checked ? 'border-orange-400 bg-orange-50 dark:border-orange-500/60 dark:bg-orange-500/10' : 'border-transparent bg-card hover:border-border',
                           )}
                         >
-                          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-stone-100">
+                          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-muted">
                             {it.imageData ? (
                               <img src={it.imageData} alt="" className="h-full w-full object-cover" />
                             ) : (
@@ -195,8 +195,8 @@ export function DaySheet({ date }: { date: string }) {
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-xs font-medium text-stone-700">{it.name || '未命名'}</p>
-                            <p className="text-[10px] text-stone-400">
+                            <p className="truncate text-xs font-medium text-foreground">{it.name || '未命名'}</p>
+                            <p className="text-[10px] text-muted-foreground/70">
                               {categoryLabel(it.category)}
                               {it.color ? ` · ${it.color}` : ''}
                             </p>
@@ -204,7 +204,7 @@ export function DaySheet({ date }: { date: string }) {
                           <span
                             className={cn(
                               'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold',
-                              checked ? 'border-orange-600 bg-orange-600 text-white' : 'border-stone-300 text-transparent',
+                              checked ? 'border-orange-600 bg-orange-600 text-white' : 'border-border text-transparent',
                             )}
                           >
                             ✓
@@ -221,7 +221,7 @@ export function DaySheet({ date }: { date: string }) {
                   <button
                     type="button"
                     onClick={() => setMode('view')}
-                    className="h-11 flex-1 rounded-xl border border-stone-200 bg-white text-sm font-bold text-stone-500"
+                    className="h-11 flex-1 rounded-xl border border-border bg-card text-sm font-bold text-muted-foreground"
                   >
                     返回
                   </button>
@@ -230,7 +230,7 @@ export function DaySheet({ date }: { date: string }) {
                   type="button"
                   disabled={picked.size === 0 || saving}
                   onClick={() => void save()}
-                  className="flex h-11 flex-[2] items-center justify-center gap-1.5 rounded-xl bg-stone-900 text-sm font-bold text-white disabled:opacity-40"
+                  className="flex h-11 flex-[2] items-center justify-center gap-1.5 rounded-xl bg-stone-900 text-sm font-bold text-white disabled:opacity-40 dark:bg-stone-100 dark:text-stone-900"
                 >
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                   记录这身（{picked.size} 件）

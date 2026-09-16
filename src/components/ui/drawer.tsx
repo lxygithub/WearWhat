@@ -59,6 +59,9 @@ function DrawerContent({
           "group/drawer-content bg-background fixed z-50 flex h-auto flex-col",
           "data-[vaul-drawer-direction=top]:inset-x-0 data-[vaul-drawer-direction=top]:top-0 data-[vaul-drawer-direction=top]:mb-24 data-[vaul-drawer-direction=top]:max-h-[80vh] data-[vaul-drawer-direction=top]:rounded-b-lg data-[vaul-drawer-direction=top]:border-b",
           "data-[vaul-drawer-direction=bottom]:inset-x-0 data-[vaul-drawer-direction=bottom]:bottom-0 data-[vaul-drawer-direction=bottom]:mt-24 data-[vaul-drawer-direction=bottom]:max-h-[80vh] data-[vaul-drawer-direction=bottom]:rounded-t-lg data-[vaul-drawer-direction=bottom]:border-t",
+          // md+：底部抽屉变为悬浮居中卡片（mx-auto 居中，不用 -translate-x-1/2，避免与 vaul 拖拽的 inline transform 冲突）。
+          // 注意：需与 base 相同的 data-[vaul-drawer-direction=bottom]: 作用域才能在级联中覆盖 inset/bottom/max-h/rounded。
+          "data-[vaul-drawer-direction=bottom]:md:mx-auto data-[vaul-drawer-direction=bottom]:md:max-w-xl data-[vaul-drawer-direction=bottom]:md:bottom-4 data-[vaul-drawer-direction=bottom]:md:rounded-2xl data-[vaul-drawer-direction=bottom]:md:border data-[vaul-drawer-direction=bottom]:md:shadow-2xl data-[vaul-drawer-direction=bottom]:md:max-h-[90vh]",
           "data-[vaul-drawer-direction=right]:inset-y-0 data-[vaul-drawer-direction=right]:right-0 data-[vaul-drawer-direction=right]:w-3/4 data-[vaul-drawer-direction=right]:border-l data-[vaul-drawer-direction=right]:sm:max-w-sm",
           "data-[vaul-drawer-direction=left]:inset-y-0 data-[vaul-drawer-direction=left]:left-0 data-[vaul-drawer-direction=left]:w-3/4 data-[vaul-drawer-direction=left]:border-r data-[vaul-drawer-direction=left]:sm:max-w-sm",
           className

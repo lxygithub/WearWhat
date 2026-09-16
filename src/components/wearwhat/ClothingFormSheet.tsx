@@ -205,7 +205,7 @@ export function ClothingFormSheet({ item }: { item: ClothingItem | null }) {
 
           {/* 图片 + AI 识别 */}
           <div className="mb-4">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-stone-200 bg-stone-50">
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-border bg-muted">
               {imageData ? (
                 <img src={imageData} alt="衣物照片" className="h-full w-full object-cover" />
               ) : (
@@ -225,14 +225,14 @@ export function ClothingFormSheet({ item }: { item: ClothingItem | null }) {
               <button
                 type="button"
                 onClick={() => cameraRef.current?.click()}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-stone-200 bg-white py-2.5 text-xs font-bold text-stone-600 active:scale-[0.98]"
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-card py-2.5 text-xs font-bold text-muted-foreground active:scale-[0.98]"
               >
                 <Camera className="h-3.5 w-3.5" /> 拍照
               </button>
               <button
                 type="button"
                 onClick={() => albumRef.current?.click()}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-stone-200 bg-white py-2.5 text-xs font-bold text-stone-600 active:scale-[0.98]"
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-card py-2.5 text-xs font-bold text-muted-foreground active:scale-[0.98]"
               >
                 <ImagePlus className="h-3.5 w-3.5" /> 相册
               </button>
@@ -270,7 +270,7 @@ export function ClothingFormSheet({ item }: { item: ClothingItem | null }) {
                 value={form.name}
                 onChange={(e) => set('name', e.target.value)}
                 placeholder="白色衬衫（可留空）"
-                className="h-10 w-full rounded-xl border border-stone-200 px-3 text-sm focus:border-orange-400 focus:outline-none"
+                className="h-10 w-full rounded-xl border border-border px-3 text-sm focus:border-orange-400 focus:outline-none dark:focus:border-orange-500/60"
               />
             </Field>
 
@@ -289,7 +289,7 @@ export function ClothingFormSheet({ item }: { item: ClothingItem | null }) {
                 {COLORS.map((c) => (
                   <Chip key={c.name} active={form.color === c.name} onClick={() => set('color', form.color === c.name ? '' : c.name)}>
                     <span
-                      className="h-2.5 w-2.5 rounded-full border border-stone-200"
+                      className="h-2.5 w-2.5 rounded-full border border-border/60"
                       style={{ backgroundColor: c.hex }}
                     />
                     {c.name}
@@ -339,35 +339,35 @@ export function ClothingFormSheet({ item }: { item: ClothingItem | null }) {
             </Field>
 
             <Collapsible open={moreOpen} onOpenChange={setMoreOpen}>
-              <CollapsibleTrigger className="flex w-full items-center justify-between rounded-xl bg-stone-50 px-3 py-2.5 text-xs font-medium text-stone-500">
+              <CollapsibleTrigger className="flex w-full items-center justify-between rounded-xl bg-muted px-3 py-2.5 text-xs font-medium text-muted-foreground">
                 更多信息（品牌 / 尺码 / 价格 …）
                 <ChevronDown className={`h-4 w-4 transition-transform ${moreOpen ? 'rotate-180' : ''}`} />
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-4 pt-4">
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="品牌">
-                    <input value={form.brand} onChange={(e) => set('brand', e.target.value)} className="h-10 w-full rounded-xl border border-stone-200 px-3 text-sm focus:border-orange-400 focus:outline-none" />
+                    <input value={form.brand} onChange={(e) => set('brand', e.target.value)} className="h-10 w-full rounded-xl border border-border px-3 text-sm focus:border-orange-400 focus:outline-none dark:focus:border-orange-500/60" />
                   </Field>
                   <Field label="尺码">
-                    <input value={form.size} onChange={(e) => set('size', e.target.value)} className="h-10 w-full rounded-xl border border-stone-200 px-3 text-sm focus:border-orange-400 focus:outline-none" />
+                    <input value={form.size} onChange={(e) => set('size', e.target.value)} className="h-10 w-full rounded-xl border border-border px-3 text-sm focus:border-orange-400 focus:outline-none dark:focus:border-orange-500/60" />
                   </Field>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="价格 (¥)">
-                    <input value={form.price} onChange={(e) => set('price', e.target.value.replace(/[^\d.]/g, ''))} inputMode="decimal" className="h-10 w-full rounded-xl border border-stone-200 px-3 text-sm focus:border-orange-400 focus:outline-none" />
+                    <input value={form.price} onChange={(e) => set('price', e.target.value.replace(/[^\d.]/g, ''))} inputMode="decimal" className="h-10 w-full rounded-xl border border-border px-3 text-sm focus:border-orange-400 focus:outline-none dark:focus:border-orange-500/60" />
                   </Field>
                   <Field label="购买日期">
-                    <input type="date" value={form.purchaseDate} onChange={(e) => set('purchaseDate', e.target.value)} className="h-10 w-full rounded-xl border border-stone-200 px-3 text-sm focus:border-orange-400 focus:outline-none" />
+                    <input type="date" value={form.purchaseDate} onChange={(e) => set('purchaseDate', e.target.value)} className="h-10 w-full rounded-xl border border-border px-3 text-sm focus:border-orange-400 focus:outline-none dark:focus:border-orange-500/60" />
                   </Field>
                 </div>
                 <Field label="材质">
-                  <input value={form.material} onChange={(e) => set('material', e.target.value)} placeholder="棉 / 羊毛 / 羽绒 …" className="h-10 w-full rounded-xl border border-stone-200 px-3 text-sm focus:border-orange-400 focus:outline-none" />
+                  <input value={form.material} onChange={(e) => set('material', e.target.value)} placeholder="棉 / 羊毛 / 羽绒 …" className="h-10 w-full rounded-xl border border-border px-3 text-sm focus:border-orange-400 focus:outline-none dark:focus:border-orange-500/60" />
                 </Field>
                 <Field label="收纳位置">
-                  <input value={form.storageLocation} onChange={(e) => set('storageLocation', e.target.value)} placeholder="比如：卧室衣柜第二层" className="h-10 w-full rounded-xl border border-stone-200 px-3 text-sm focus:border-orange-400 focus:outline-none" />
+                  <input value={form.storageLocation} onChange={(e) => set('storageLocation', e.target.value)} placeholder="比如：卧室衣柜第二层" className="h-10 w-full rounded-xl border border-border px-3 text-sm focus:border-orange-400 focus:outline-none dark:focus:border-orange-500/60" />
                 </Field>
                 <Field label="备注">
-                  <textarea value={form.notes} onChange={(e) => set('notes', e.target.value)} rows={2} className="w-full resize-none rounded-xl border border-stone-200 p-3 text-sm focus:border-orange-400 focus:outline-none" />
+                  <textarea value={form.notes} onChange={(e) => set('notes', e.target.value)} rows={2} className="w-full resize-none rounded-xl border border-border p-3 text-sm focus:border-orange-400 focus:outline-none dark:focus:border-orange-500/60" />
                 </Field>
               </CollapsibleContent>
             </Collapsible>
@@ -376,7 +376,7 @@ export function ClothingFormSheet({ item }: { item: ClothingItem | null }) {
               <button
                 type="button"
                 onClick={closeSheet}
-                className="h-12 flex-1 rounded-xl border border-stone-200 bg-white text-sm font-bold text-stone-500"
+                className="h-12 flex-1 rounded-xl border border-border bg-card text-sm font-bold text-muted-foreground"
               >
                 取消
               </button>
@@ -384,7 +384,7 @@ export function ClothingFormSheet({ item }: { item: ClothingItem | null }) {
                 type="button"
                 disabled={saving}
                 onClick={() => void save()}
-                className="flex h-12 flex-[2] items-center justify-center gap-1.5 rounded-xl bg-stone-900 text-sm font-bold text-white shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+                className="flex h-12 flex-[2] items-center justify-center gap-1.5 rounded-xl bg-stone-900 text-sm font-bold text-white shadow-md transition-all active:scale-[0.98] disabled:opacity-50 dark:bg-stone-100 dark:text-stone-900"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 {isEdit ? '保存修改' : '入柜'}
@@ -400,7 +400,7 @@ export function ClothingFormSheet({ item }: { item: ClothingItem | null }) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="mb-1.5 block text-[11px] font-bold text-stone-400">{label}</label>
+      <label className="mb-1.5 block text-[11px] font-bold text-muted-foreground/70">{label}</label>
       {children}
     </div>
   )

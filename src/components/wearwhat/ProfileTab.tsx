@@ -3,13 +3,14 @@
 'use client'
 
 import { useState } from 'react'
-import { Bot, Eye, EyeOff, Heart, KeyRound, LogOut, MapPin, Plus, Save, Trash2 } from 'lucide-react'
+import { Bot, Eye, EyeOff, Heart, KeyRound, LogOut, MapPin, Monitor, Moon, Plus, Save, Sun, SunMoon, Trash2 } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import { toast } from '@/hooks/use-toast'
 import { api } from './api'
 import { CITIES, categoryIcon, categoryLabel, colorHex } from './constants'
 import type { ClothingItem } from './types'
 import { useWW } from './store'
-import { EmptyHint, SectionTitle, WWSkeleton } from './ui-bits'
+import { EmptyHint, SectionTitle, WWSkeleton, useMounted } from './ui-bits'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
@@ -62,7 +63,7 @@ export function ProfileTab() {
       <section>
         <SectionTitle title="衣橱统计" />
         {stats ? (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
             <StatBig label="全部衣物" value={String(stats.totalItems)} unit="件" sub={`${stats.activeItems} 件在穿`} />
             <StatBig
               label="总价值"
@@ -79,7 +80,7 @@ export function ProfileTab() {
             />
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
               <WWSkeleton key={i} className="h-20" />
             ))}
@@ -108,23 +109,23 @@ export function ProfileTab() {
       {stats && stats.colorDist.length > 0 ? (
         <section>
           <SectionTitle title="颜色分布" />
-          <div className="space-y-2 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+          <div className="space-y-2 rounded-2xl border border-border bg-card p-4 shadow-sm">
             {stats.colorDist.slice(0, 6).map((c) => {
               const max = stats.colorDist[0]?.count || 1
               return (
                 <div key={c.name} className="flex items-center gap-2">
                   <span
-                    className="h-3 w-3 shrink-0 rounded-full border border-stone-200"
+                    className="h-3 w-3 shrink-0 rounded-full border border-border/60"
                     style={{ backgroundColor: colorHex(c.name) }}
                   />
-                  <span className="w-12 shrink-0 text-xs text-stone-600">{c.name}</span>
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-stone-100">
+                  <span className="w-12 shrink-0 text-xs text-muted-foreground">{c.name}</span>
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                     <div
                       className="h-full rounded-full bg-orange-500/80"
                       style={{ width: `${Math.max(6, Math.round((c.count / max) * 100))}%` }}
                     />
                   </div>
-                  <span className="w-6 text-right text-[10px] text-stone-400">{c.count}</span>
+                  <span className="w-6 text-right text-[10px] text-muted-foreground/70">{c.count}</span>
                 </div>
               )
             })}
@@ -136,7 +137,7 @@ export function ProfileTab() {
       {stats && stats.wearLast30.some((d) => d.count > 0) ? (
         <section>
           <SectionTitle title="穿着热度 · 近 30 天" />
-          <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
             <div className="flex h-16 items-end gap-[3px]">
               {stats.wearLast30.map((d) => {
                 const max = Math.max(...stats.wearLast30.map((x) => x.count), 1)
@@ -145,7 +146,7 @@ export function ProfileTab() {
                   <div
                     key={d.date}
                     title={`${d.date}：${d.count} 套`}
-                    className={cn('flex-1 rounded-sm', d.count === 0 ? 'bg-stone-100' : 'bg-orange-500/85')}
+                    className={cn('flex-1 rounded-sm', d.count === 0 ? 'bg-muted' : 'bg-orange-500/85')}
                     style={{ height: `${h}px` }}
                   />
                 )
@@ -163,7 +164,7 @@ export function ProfileTab() {
             {stats.categoryDist.map((c) => (
               <span
                 key={c.category}
-                className="rounded-full border border-stone-200 bg-white px-2.5 py-1 text-[11px] text-stone-600 shadow-sm"
+                className="rounded-full border border-border bg-card px-2.5 py-1 text-[11px] text-muted-foreground shadow-sm"
               >
                 {categoryIcon(c.category)} {categoryLabel(c.category)} · {c.count}
               </span>
@@ -176,12 +177,14 @@ export function ProfileTab() {
 
       <AISettingsSection />
 
+      <AppearanceSection />
+
       {/* 设置 */}
       <section>
         <SectionTitle title="设置" />
-        <div className="space-y-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+        <div className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-sm text-stone-700">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4 text-orange-500" />
               天气城市
             </div>
@@ -203,9 +206,9 @@ export function ProfileTab() {
 
       {/* 关于 */}
       <section>
-        <div className="rounded-2xl border border-stone-200 bg-stone-50/70 p-4 text-center">
-          <p className="text-sm font-black text-stone-700">今天穿什么 · WearWhat</p>
-          <p className="mt-1 text-[11px] leading-relaxed text-stone-400">
+        <div className="rounded-2xl border border-border bg-muted/50 p-4 text-center">
+          <p className="text-sm font-black text-foreground">今天穿什么 · WearWhat</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground/70">
             v0.2.0 · Web 端（手机适配）· 邮箱账号
             <br />
             数据库 SQLite / Cloudflare D1 Ready · AI 识别与搭配由大模型驱动
@@ -255,14 +258,14 @@ function AISettingsSection() {
   return (
     <section>
       <SectionTitle title="AI 模型" />
-      <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
         <div className="flex gap-2.5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400">
             <Bot className="h-4.5 w-4.5" />
           </div>
           <div>
-            <p className="text-sm font-bold text-stone-700">自带云端大模型</p>
-            <p className="mt-0.5 text-[11px] leading-relaxed text-stone-400">
+            <p className="text-sm font-bold text-foreground">自带云端大模型</p>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground/70">
               支持 OpenAI 兼容接口，如 DeepSeek、OpenAI、智谱。用于识图、搭配理由和智能搜索。
             </p>
           </div>
@@ -270,7 +273,7 @@ function AISettingsSection() {
 
         <div className="mt-4 space-y-3">
           <label className="block">
-            <span className="mb-1.5 block text-[11px] font-medium text-stone-500">服务地址</span>
+            <span className="mb-1.5 block text-[11px] font-medium text-muted-foreground">服务地址</span>
             <Input
               value={settings.baseUrl}
               onChange={(event) => update('baseUrl', event.target.value)}
@@ -282,9 +285,9 @@ function AISettingsSection() {
             />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-[11px] font-medium text-stone-500">API Key</span>
+            <span className="mb-1.5 block text-[11px] font-medium text-muted-foreground">API Key</span>
             <div className="relative">
-              <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-400" />
+              <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
               <Input
                 value={settings.apiKey}
                 onChange={(event) => update('apiKey', event.target.value)}
@@ -298,7 +301,7 @@ function AISettingsSection() {
               <button
                 type="button"
                 onClick={() => setShowKey((visible) => !visible)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-stone-400 hover:text-stone-600"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground/70 transition-colors hover:text-foreground"
                 aria-label={showKey ? '隐藏 API Key' : '显示 API Key'}
               >
                 {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -306,7 +309,7 @@ function AISettingsSection() {
             </div>
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-[11px] font-medium text-stone-500">模型名 <span className="font-normal text-stone-300">（可选）</span></span>
+            <span className="mb-1.5 block text-[11px] font-medium text-muted-foreground">模型名 <span className="font-normal text-muted-foreground/60">（可选）</span></span>
             <Input
               value={settings.model}
               onChange={(event) => update('model', event.target.value)}
@@ -318,14 +321,14 @@ function AISettingsSection() {
           </label>
         </div>
 
-        <div className="mt-3 rounded-xl bg-stone-50 px-3 py-2 text-[10px] leading-relaxed text-stone-400">
+        <div className="mt-3 rounded-xl bg-muted px-3 py-2 text-[10px] leading-relaxed text-muted-foreground/70">
           API Key 只保存在此浏览器，不写入账号或数据库；调用 AI 时通过 HTTPS 临时转发到你填写的服务。
         </div>
         <div className="mt-3 flex gap-2">
           <button
             type="button"
             onClick={save}
-            className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-stone-900 text-xs font-bold text-white transition-colors hover:bg-stone-700"
+            className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-stone-900 text-xs font-bold text-white transition-colors hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
           >
             <Save className="h-3.5 w-3.5" />
             保存并启用
@@ -333,7 +336,7 @@ function AISettingsSection() {
           <button
             type="button"
             onClick={clear}
-            className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-stone-200 px-3 text-xs font-bold text-stone-500 transition-colors hover:border-red-200 hover:text-red-500"
+            className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border px-3 text-xs font-bold text-muted-foreground transition-colors hover:border-red-200 hover:text-red-500 dark:hover:border-red-500/30"
           >
             <Trash2 className="h-3.5 w-3.5" />
             清除
@@ -344,15 +347,64 @@ function AISettingsSection() {
   )
 }
 
+const THEME_OPTIONS = [
+  { value: 'light', label: '浅色', icon: Sun },
+  { value: 'dark', label: '深色', icon: Moon },
+  { value: 'system', label: '跟随系统', icon: Monitor },
+] as const
+
+function AppearanceSection() {
+  const { theme, setTheme } = useTheme()
+  const mounted = useMounted()
+
+  return (
+    <section>
+      <SectionTitle title="外观" />
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <SunMoon className="h-4 w-4 text-orange-500" />
+          界面主题
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-1 rounded-xl bg-muted p-1" role="radiogroup" aria-label="界面主题">
+          {THEME_OPTIONS.map(({ value, label, icon: Icon }) => {
+            const selected = mounted && theme === value
+            return (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => setTheme(value)}
+                className={cn(
+                  'flex min-h-[40px] items-center justify-center gap-1.5 rounded-lg px-1 text-xs font-bold transition-all',
+                  selected
+                    ? 'bg-card text-orange-600 shadow-sm dark:text-orange-500'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="truncate">{label}</span>
+              </button>
+            )
+          })}
+        </div>
+        <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground/70">
+          跟随系统会随设备的深浅色自动切换。
+        </p>
+      </div>
+    </section>
+  )
+}
+
 function StatBig({ label, value, unit, sub }: { label: string; value: string; unit: string; sub: string }) {
   return (
-    <div className="rounded-xl border border-stone-200 bg-white p-3.5 shadow-sm">
-      <div className="text-[10px] text-stone-400">{label}</div>
-      <div className="mt-1 text-xl font-black text-stone-800">
+    <div className="rounded-xl border border-border bg-card p-3.5 shadow-sm">
+      <div className="text-[10px] text-muted-foreground/70">{label}</div>
+      <div className="mt-1 text-xl font-black text-foreground">
         {value}
-        <span className="ml-0.5 text-[11px] font-medium text-stone-400">{unit}</span>
+        <span className="ml-0.5 text-[11px] font-medium text-muted-foreground/70">{unit}</span>
       </div>
-      <div className="mt-0.5 text-[10px] text-stone-400">{sub}</div>
+      <div className="mt-0.5 text-[10px] text-muted-foreground/70">{sub}</div>
     </div>
   )
 }
@@ -370,12 +422,12 @@ function RankCard({
 }) {
   const openSheet = useWW((s) => s.openSheet)
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-      <h3 className="mb-2 text-xs font-bold text-stone-600">
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <h3 className="mb-2 text-xs font-bold text-muted-foreground">
         {badge} {title}
       </h3>
       {items.length === 0 ? (
-        <p className="py-2 text-[11px] text-stone-300">还没有数据</p>
+        <p className="py-2 text-[11px] text-muted-foreground/60">还没有数据</p>
       ) : (
         <div className="space-y-2">
           {items.map((it) => (
@@ -385,7 +437,7 @@ function RankCard({
               onClick={() => openSheet({ type: 'detail', item: it })}
               className="flex w-full items-center gap-2 text-left"
             >
-              <span className="h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-stone-100">
+              <span className="h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-muted">
                 {it.imageData ? (
                   <img src={it.imageData} alt={it.name ?? ''} className="h-full w-full object-cover" />
                 ) : (
@@ -395,10 +447,10 @@ function RankCard({
                 )}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-xs font-medium text-stone-700">
+                <span className="block truncate text-xs font-medium text-foreground">
                   {it.name || '未命名'}
                 </span>
-                <span className="block text-[10px] text-stone-400">{valueFn(it)}</span>
+                <span className="block text-[10px] text-muted-foreground/70">{valueFn(it)}</span>
               </span>
             </button>
           ))}
@@ -439,7 +491,7 @@ function WishlistSection() {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="flex items-center gap-1 rounded-full bg-stone-900 px-3 py-1.5 text-[11px] font-bold text-white"
+            className="flex items-center gap-1 rounded-full bg-stone-900 px-3 py-1.5 text-[11px] font-bold text-white dark:bg-stone-100 dark:text-stone-900"
           >
             <Plus className="h-3 w-3" /> 想买的
           </button>
@@ -448,17 +500,17 @@ function WishlistSection() {
       {entries.length === 0 ? (
         <EmptyHint lines={['想买但还没买的，先记下来。', '买之前它会提醒你：白衬衫你已经有三件了。']} />
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 md:grid md:grid-cols-2 md:gap-2 md:space-y-0">
           {entries.map((e) => (
             <div
               key={e.id}
-              className="flex items-center gap-3 rounded-xl border border-stone-200 bg-white px-3.5 py-3 shadow-sm"
+              className="flex items-center gap-3 rounded-xl border border-border bg-card px-3.5 py-3 shadow-sm"
             >
               <Heart className="h-4 w-4 shrink-0 text-orange-500" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-stone-700">{e.name}</p>
+                <p className="truncate text-sm font-medium text-foreground">{e.name}</p>
                 {e.expectedPrice ? (
-                  <p className="text-[11px] text-stone-400">预期 ¥{e.expectedPrice}</p>
+                  <p className="text-[11px] text-muted-foreground/70">预期 ¥{e.expectedPrice}</p>
                 ) : null}
               </div>
               <button
@@ -468,7 +520,7 @@ function WishlistSection() {
                   await api.deleteWishlist(e.id)
                   await loadWishlist()
                 }}
-                className="text-stone-300 transition-colors hover:text-red-500"
+                className="text-muted-foreground/60 transition-colors hover:text-red-500"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -487,20 +539,20 @@ function WishlistSection() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="比如：百搭风衣"
-              className="h-10 w-full rounded-xl border border-stone-200 px-3 text-sm focus:border-orange-400 focus:outline-none"
+              className="h-10 w-full rounded-xl border border-border bg-card px-3 text-sm focus:border-orange-400 focus:outline-none dark:focus:border-orange-500/60"
             />
             <input
               value={price}
               onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ''))}
               placeholder="预算（可选）"
               inputMode="decimal"
-              className="h-10 w-full rounded-xl border border-stone-200 px-3 text-sm focus:border-orange-400 focus:outline-none"
+              className="h-10 w-full rounded-xl border border-border bg-card px-3 text-sm focus:border-orange-400 focus:outline-none dark:focus:border-orange-500/60"
             />
             <button
               type="button"
               disabled={!name.trim() || adding}
               onClick={() => void add()}
-              className="h-10 w-full rounded-xl bg-stone-900 text-sm font-bold text-white disabled:opacity-40"
+              className="h-10 w-full rounded-xl bg-stone-900 text-sm font-bold text-white disabled:opacity-40 dark:bg-stone-100 dark:text-stone-900"
             >
               记下来
             </button>

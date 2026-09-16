@@ -49,12 +49,12 @@ export function AuthGate() {
 
 function AuthSplash() {
   return (
-    <div className="min-h-screen bg-stone-200/50">
-      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center bg-background px-8 shadow-xl sm:border-x sm:border-stone-300/60">
+    <div className="min-h-screen bg-stone-200/50 dark:bg-black/40">
+      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center bg-background px-8 shadow-xl sm:border-x sm:border-border/60">
         <div className="flex h-16 w-16 animate-bounce items-center justify-center rounded-2xl bg-orange-600 text-3xl shadow-lg shadow-orange-600/20">
           👕
         </div>
-        <p className="mt-4 text-sm font-medium text-stone-500">正在打开你的衣橱…</p>
+        <p className="mt-4 text-sm font-medium text-muted-foreground">正在打开你的衣橱…</p>
       </div>
     </div>
   )
