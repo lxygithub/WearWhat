@@ -32,6 +32,21 @@ export function WearWhatApp() {
 
   useEffect(() => {
     void init()
+    // 桌面图标长按菜单（manifest.shortcuts）走深链：/?tab=closet|calendar|profile、/?action=add
+    // 处理完清掉参数，刷新时不会重复触发
+    const sp = new URLSearchParams(window.location.search)
+    const wantTab = sp.get('tab')
+    const wantAction = sp.get('action')
+    if (wantTab || wantAction) {
+      window.history.replaceState(null, '', window.location.pathname)
+      if (wantTab && ['home', 'closet', 'calendar', 'profile'].includes(wantTab)) {
+        setTab(wantTab as typeof tab)
+      }
+      if (wantAction === 'add') {
+        setTab('closet')
+        useWW.getState().openSheet({ type: 'form', item: null })
+      }
+    }
   }, [])
 
   const dateText = formatDateCN(new Date())

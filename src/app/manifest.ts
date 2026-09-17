@@ -20,5 +20,26 @@ export default function manifest(): MetadataRoute.Manifest {
       // maskable：满幅背景，交给 Android 自己裁形状
       { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
+    // 桌面图标长按菜单（Android/Chrome 支持；iOS Safari 目前不支持 manifest.shortcuts）
+    shortcuts: [
+      {
+        name: '添加衣物',
+        short_name: '加一件',
+        url: '/?action=add',
+        icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+      },
+      {
+        name: '我的衣橱',
+        short_name: '衣橱',
+        url: '/?tab=closet',
+        icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+      },
+      {
+        name: '穿搭日历',
+        short_name: '日历',
+        url: '/?tab=calendar',
+        icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+      },
+    ],
   }
 }
