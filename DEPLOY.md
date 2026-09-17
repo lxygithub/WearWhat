@@ -154,6 +154,9 @@ bun run cf:preview
 
 ### 数据
 
+> **2026-09-17 起数据层已迁到内网 PostgreSQL**（经 SQL Gateway），D1 仅作历史备份，详见文末
+> 「SQL Gateway 与 PostgreSQL 数据层」。
+
 本地开发的数据（`db/custom.db`、种子衣物）**不会**自动同步到线上，生产数据从空库开始。
 需要导入种子数据的话，`scripts/seed.ts` 走的是本地 SQLite，线上要另想办法（数据量小，手动补即可）。
 
@@ -242,3 +245,47 @@ ZAI_MODEL=deepseek-flash
 ```
 
 账号功能本地零配置：未配置邮件服务时，验证码会自动回填到表单（开发模式）。
+
+---
+
+## SQL Gateway 与 PostgreSQL 数据层（2026-09-17）
+
+线上数据不再走 D1：Worker 经 WAF + Tunnel 调用家中 SQL Gateway，读写内网 PostgreSQL 的
+**独立 `wearwhat` 库**（库级隔离，target `wearwhat-postgres`，账号 `sql_gateway_wearwhat_ro/rw`）。
+本地开发仍是 SQLite（`prisma/schema.prisma`），两套互不影响。
+
+### 建库（owner 执行一次）
+
+```bash
+# 在部署网关的那台机器上，把 __RO__/__RW__ 换成该 target 的只读/读写账号名
+sed 's/__RO__/sql_gateway_wearwhat_ro/g; s/__RW__/sql_gateway_wearwhat_rw/g' scripts/pg-schema.sql > /tmp/wearwhat.sql
+docker exec -i forgotit-postgres psql -U <owner> -d wearwhat -v ON_ERROR_STOP=1 -f - < /tmp/wearwhat.sql
+```
+
+### 部署链路（已内置在 cf:build 里）
+
+```bash
+bun run cf:deploy
+# = scripts/gen-workers-schema.mjs（派生 worker-pg schema）
+#   + prisma generate --schema prisma/schema.worker-pg.prisma
+#   + opennextjs-cloudflare build + deploy
+```
+
+### 三个必须记住的坑
+
+1. **Prisma 的方言由 schema 决定，不是由 adapter 决定**：所以 `gen-workers-schema.mjs` 额外派生一份
+   `schema.worker-pg.prisma`（`provider = "postgresql"`）。同时因为表在独立 schema 里，还需要
+   `schemas = ["wearwhat"]` + 每个 model 的 `@@schema("wearwhat")` —— 否则 Prisma 会发
+   `"public"."User"` 而报 `relation "public.User" does not exist`。
+2. **`pg-cloudflare` 必须整包进文件追踪**：`pg` 在 Workers 下会 `require('pg-cloudflare')`，其
+   `exports` 的 `workerd` 条件指向 `dist/index.js`，而 Next 默认只复制 `dist/empty.js`，esbuild 打包会报
+   `Could not resolve "pg-cloudflare"`。已在 `next.config.ts` 用
+   `outputFileTracingIncludes: { '*': ['./node_modules/pg-cloudflare/**'] }` 解决。
+3. **时间戳按 UTC 存、按 UTC 读**：网关侧已固定（`pgTypes.setTypeParser(1114, …)` + 连接
+   `options: '-c timezone=UTC'`），应用侧无需特殊处理，但**不要**再往库里写本地时区的字符串。
+
+### 回退
+
+`wrangler.jsonc` 里的 D1 绑定（`wearwhat-db`）与 `prisma/schema.workers.prisma`（SQLite 方言 workers
+客户端）都还在：把 `src/lib/db.ts` 的 worker 分支切回 `PrismaD1` 并部署即可回到 D1 形态（D1 里是
+迁移前的快照，切换后的新数据不会回补）。
