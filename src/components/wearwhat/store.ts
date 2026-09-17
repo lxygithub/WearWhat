@@ -21,6 +21,7 @@ export type Sheet =
   | { type: 'detail'; item: ClothingItem }
   | { type: 'recommend'; occasion?: OccasionKey }
   | { type: 'day'; date: string }
+  | { type: 'ask' } // 衣橱问答
   | null
 
 const CITY_KEY = 'wearwhat.city'

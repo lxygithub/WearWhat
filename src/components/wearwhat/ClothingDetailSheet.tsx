@@ -82,33 +82,33 @@ export function ClothingDetailSheet({ itemId }: { itemId: string }) {
             </DrawerDescription>
           </DrawerHeader>
 
-          <div className="mx-auto aspect-[4/3] w-full max-w-[300px] overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
+          <div className="mx-auto aspect-[4/3] w-full max-w-[300px] overflow-hidden rounded-2xl border border-border/60 bg-muted">
             <ItemThumb item={item} rounded="rounded-2xl" />
           </div>
 
           {/* 标签 */}
           <div className="mt-4 flex flex-wrap gap-1.5">
-            <span className="rounded-full bg-stone-900 px-2.5 py-1 text-[11px] font-bold text-white">
+            <span className="rounded-full bg-stone-900 px-2.5 py-1 text-[11px] font-bold text-white dark:bg-stone-100 dark:text-stone-900">
               {categoryLabel(item.category)}
             </span>
             {item.color && (
-              <span className="flex items-center gap-1 rounded-full border border-stone-200 bg-white px-2.5 py-1 text-[11px] text-stone-600">
-                <span className="h-2.5 w-2.5 rounded-full border border-stone-200" style={{ backgroundColor: colorHex(item.color) }} />
+              <span className="flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] text-muted-foreground">
+                <span className="h-2.5 w-2.5 rounded-full border border-border/60" style={{ backgroundColor: colorHex(item.color) }} />
                 {item.color}
               </span>
             )}
             {seasons.map((s) => (
-              <span key={s} className="rounded-full border border-stone-200 bg-white px-2.5 py-1 text-[11px] text-stone-600">
+              <span key={s} className="rounded-full border border-border bg-card px-2.5 py-1 text-[11px] text-muted-foreground">
                 {seasonLabel(s)}
               </span>
             ))}
             {occasions.map((o) => (
-              <span key={o} className="rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[11px] text-orange-700">
+              <span key={o} className="rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[11px] text-orange-700 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-400">
                 {occasionLabel(o)}
               </span>
             ))}
             {item.pattern && (
-              <span className="rounded-full border border-stone-200 bg-white px-2.5 py-1 text-[11px] text-stone-600">
+              <span className="rounded-full border border-border bg-card px-2.5 py-1 text-[11px] text-muted-foreground">
                 {item.pattern === 'solid' ? '纯色' : item.pattern === 'striped' ? '条纹' : item.pattern === 'plaid' ? '格子' : '印花'}
               </span>
             )}
@@ -128,7 +128,7 @@ export function ClothingDetailSheet({ itemId }: { itemId: string }) {
 
           {/* 状态快捷切换 */}
           <div className="mt-4">
-            <p className="mb-1.5 text-[11px] font-bold text-stone-400">快速换状态</p>
+            <p className="mb-1.5 text-[11px] font-bold text-muted-foreground/70">快速换状态</p>
             <div className="flex flex-wrap gap-1.5">
               {['wearing', 'laundry', 'stored', 'repair', 'discarded'].map((s) => (
                 <Chip key={s} active={item.storageStatus === s} onClick={() => void setStatus(s)} disabled={busy}>
@@ -144,7 +144,7 @@ export function ClothingDetailSheet({ itemId }: { itemId: string }) {
               type="button"
               disabled={busy}
               onClick={() => setConfirmDelete(true)}
-              className="flex h-12 w-14 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-500 transition-all active:scale-95"
+              className="flex h-12 w-14 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-500 transition-all active:scale-95 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400"
               aria-label="删除"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
@@ -152,7 +152,7 @@ export function ClothingDetailSheet({ itemId }: { itemId: string }) {
             <button
               type="button"
               onClick={() => openSheet({ type: 'form', item })}
-              className="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-xl border border-stone-200 bg-white text-sm font-bold text-stone-700 active:scale-[0.98]"
+              className="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-card text-sm font-bold text-muted-foreground active:scale-[0.98]"
             >
               <Pencil className="h-4 w-4" /> 编辑
             </button>
@@ -187,9 +187,9 @@ export function ClothingDetailSheet({ itemId }: { itemId: string }) {
 function Attr({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null
   return (
-    <div className="rounded-lg bg-stone-50 px-3 py-2">
-      <span className="block text-[10px] text-stone-400">{label}</span>
-      <span className="mt-0.5 block font-medium text-stone-700">{value}</span>
+    <div className="rounded-lg bg-muted px-3 py-2">
+      <span className="block text-[10px] text-muted-foreground/70">{label}</span>
+      <span className="mt-0.5 block font-medium text-foreground">{value}</span>
     </div>
   )
 }

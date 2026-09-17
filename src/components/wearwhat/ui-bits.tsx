@@ -2,9 +2,18 @@
 
 'use client'
 
+import { useSyncExternalStore } from 'react'
 import { cn } from '@/lib/utils'
 import { categoryIcon } from './constants'
 import type { ClothingItem } from './types'
+
+const emptySubscribe = () => () => {}
+
+/** 客户端挂载标记：SSR/首次渲染返回 false，hydration 后变 true。
+ *  等价于旧式 useState+useEffect mounted 守卫（react-hooks/set-state-in-effect 禁止在 effect 内同步 setState，故用官方推荐的 useSyncExternalStore）。 */
+export function useMounted(): boolean {
+  return useSyncExternalStore(emptySubscribe, () => true, () => false)
+}
 
 /** 可选中的圆角小芯片 */
 export function Chip({
@@ -29,7 +38,7 @@ export function Chip({
         'inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-all select-none touch-manipulation',
         active
           ? 'border-orange-600 bg-orange-600 text-white shadow-sm'
-          : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300 active:scale-95',
+          : 'border-border bg-card text-muted-foreground hover:border-muted-foreground/50 active:scale-95',
         disabled && 'opacity-50',
         className,
       )}
@@ -42,7 +51,7 @@ export function Chip({
 export function SectionTitle({ title, right }: { title: string; right?: React.ReactNode }) {
   return (
     <div className="mb-2.5 flex items-center justify-between px-1">
-      <h2 className="text-[15px] font-bold tracking-wide text-stone-800">{title}</h2>
+      <h2 className="text-[15px] font-bold tracking-wide text-foreground">{title}</h2>
       {right}
     </div>
   )
@@ -71,7 +80,7 @@ export function ItemThumb({
   return (
     <div
       className={cn(
-        'flex h-full w-full items-center justify-center bg-stone-100 text-2xl',
+        'flex h-full w-full items-center justify-center bg-muted text-2xl',
         rounded,
         className,
       )}
@@ -83,10 +92,10 @@ export function ItemThumb({
 
 export function EmptyHint({ lines, children }: { lines: string[]; children?: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-stone-300 bg-stone-50/60 px-6 py-10 text-center">
+    <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-muted/50 px-6 py-10 text-center">
       <span className="text-3xl">🧺</span>
       {lines.map((l) => (
-        <p key={l} className="text-sm text-stone-500">
+        <p key={l} className="text-sm text-muted-foreground">
           {l}
         </p>
       ))}
@@ -96,5 +105,5 @@ export function EmptyHint({ lines, children }: { lines: string[]; children?: Rea
 }
 
 export function WWSkeleton({ className }: { className?: string }) {
-  return <div className={cn('animate-pulse rounded-xl bg-stone-200/70', className)} />
+  return <div className={cn('animate-pulse rounded-xl bg-muted/70', className)} />
 }

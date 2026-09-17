@@ -135,10 +135,10 @@ export function RecommendPanel({ initialOccasion }: { initialOccasion?: Occasion
         <div className="mx-auto w-full max-w-md overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
           <DrawerHeader className="px-0 pb-1 pt-1 text-left">
             <DrawerTitle className="flex items-center gap-2 text-base font-black">
-              <Sparkles className="h-4 w-4 text-orange-600" />
+              <Sparkles className="h-4 w-4 text-orange-600 dark:text-orange-500" />
               今日推荐
               {weather && (
-                <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[11px] font-medium text-stone-500">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                   {weather.icon} {Math.round(weather.temp)}° {weather.condition}
                 </span>
               )}
@@ -166,10 +166,10 @@ export function RecommendPanel({ initialOccasion }: { initialOccasion?: Occasion
           {loading ? (
             <LoadingState />
           ) : !data || data.outfits.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50/60 px-6 py-10 text-center">
+            <div className="rounded-2xl border border-dashed border-border bg-muted/50 px-6 py-10 text-center">
               <span className="text-3xl">🤷</span>
-              <p className="mt-2 text-sm text-stone-500">{data?.message ?? COPY.full[0]}</p>
-              <p className="mt-1 text-xs text-stone-400">{COPY.full[1]}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{data?.message ?? COPY.full[0]}</p>
+              <p className="mt-1 text-xs text-muted-foreground/70">{COPY.full[1]}</p>
             </div>
           ) : (
             <div className="space-y-3 pb-2">
@@ -186,7 +186,7 @@ export function RecommendPanel({ initialOccasion }: { initialOccasion?: Occasion
               <button
                 type="button"
                 onClick={() => void generate(occasion)}
-                className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-stone-200 bg-white py-3 text-sm font-bold text-stone-600 shadow-sm active:scale-[0.98]"
+                className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-border bg-card py-3 text-sm font-bold text-muted-foreground shadow-sm active:scale-[0.98]"
               >
                 <RefreshCcw className="h-4 w-4" /> 换一批
               </button>
@@ -216,15 +216,15 @@ function OutfitCard({
   onConfirm: () => void
 }) {
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-xs font-black text-stone-700">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-stone-900 text-[10px] font-black text-white">
+        <span className="flex items-center gap-1.5 text-xs font-black text-muted-foreground">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-stone-900 text-[10px] font-black text-white dark:bg-stone-100 dark:text-stone-900">
             {index + 1}
           </span>
           方案 {index + 1}
         </span>
-        <span className="rounded-full bg-orange-600/10 px-2 py-0.5 text-[10px] font-bold text-orange-600">
+        <span className="rounded-full bg-orange-600/10 px-2 py-0.5 text-[10px] font-bold text-orange-600 dark:bg-orange-500/10 dark:text-orange-500">
           匹配 {Math.min(99, Math.round(outfit.score))} 分
         </span>
       </div>
@@ -235,7 +235,7 @@ function OutfitCard({
           <div key={item.id} className="flex items-center gap-1">
             {idx > 0 && <span className="text-stone-300">+</span>}
             <div className="group relative shrink-0">
-              <div className="h-24 w-[72px] overflow-hidden rounded-lg border border-stone-100 bg-stone-50">
+              <div className="h-24 w-[72px] overflow-hidden rounded-lg border border-border/60 bg-muted">
                 {item.imageData ? (
                   <img src={item.imageData} alt={item.name ?? ''} className="h-full w-full object-cover" />
                 ) : (
@@ -252,7 +252,7 @@ function OutfitCard({
               >
                 <RotateCcw className="h-3 w-3" />
               </button>
-              <p className="mt-1 w-[72px] truncate text-center text-[9px] text-stone-400">
+              <p className="mt-1 w-[72px] truncate text-center text-[9px] text-muted-foreground/70">
                 {item.color ?? ''}{item.name || categoryIcon(item.category)}
               </p>
             </div>
@@ -264,20 +264,20 @@ function OutfitCard({
       {outfit.styleTags.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
           {outfit.styleTags.map((t) => (
-            <span key={t} className="rounded-full bg-stone-100 px-2 py-0.5 text-[10px] text-stone-500">
+            <span key={t} className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
               {t}
             </span>
           ))}
         </div>
       )}
-      <p className="mt-2 text-xs leading-relaxed text-stone-500">{outfit.reason}</p>
+      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{outfit.reason}</p>
 
       <button
         type="button"
         disabled={confirming}
         onClick={onConfirm}
         className={cn(
-          'mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-stone-900 py-3 text-sm font-bold text-white shadow-md transition-all active:scale-[0.98] disabled:opacity-50',
+          'mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-stone-900 py-3 text-sm font-bold text-white shadow-md transition-all active:scale-[0.98] disabled:opacity-50 dark:bg-stone-100 dark:text-stone-900',
           index === 0 && 'bg-orange-600 hover:bg-orange-700',
         )}
       >
@@ -291,18 +291,18 @@ function OutfitCard({
 function LoadingState() {
   return (
     <div className="space-y-3 pb-2">
-      <div className="flex items-center justify-center gap-2 rounded-xl bg-orange-50 py-3 text-xs font-medium text-orange-600">
+      <div className="flex items-center justify-center gap-2 rounded-xl bg-orange-50 py-3 text-xs font-medium text-orange-600 dark:bg-orange-500/10 dark:text-orange-500">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
         {COPY.splash}
       </div>
       {[0, 1, 2].map((i) => (
-        <div key={i} className="rounded-2xl border border-stone-200 bg-white p-4">
+        <div key={i} className="rounded-2xl border border-border bg-card p-4">
           <div className="flex gap-2">
             {[0, 1, 2].map((j) => (
-              <div key={j} className="h-24 w-[72px] animate-pulse rounded-lg bg-stone-200/70" />
+              <div key={j} className="h-24 w-[72px] animate-pulse rounded-lg bg-muted/70" />
             ))}
           </div>
-          <div className="mt-3 h-3 w-3/4 animate-pulse rounded bg-stone-200/70" />
+          <div className="mt-3 h-3 w-3/4 animate-pulse rounded bg-muted/70" />
         </div>
       ))}
     </div>

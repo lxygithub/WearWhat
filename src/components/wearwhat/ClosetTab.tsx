@@ -100,7 +100,7 @@ export function ClosetTab() {
       {/* 搜索 */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -108,7 +108,7 @@ export function ClosetTab() {
               if (e.key === 'Enter') void doSearch()
             }}
             placeholder="那件蓝色条纹衬衫在哪？"
-            className="h-10 w-full rounded-xl border border-stone-200 bg-white pl-9 pr-8 text-sm text-stone-700 placeholder:text-stone-300 focus:border-orange-400 focus:outline-none"
+            className="h-10 w-full rounded-xl border border-border bg-card pl-9 pr-8 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-orange-400 focus:outline-none dark:focus:border-orange-500/60"
             aria-label="搜索衣物"
           />
           {q && (
@@ -116,7 +116,7 @@ export function ClosetTab() {
               type="button"
               aria-label="清空搜索"
               onClick={clearSearch}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-300 hover:text-stone-500"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 transition-colors hover:text-muted-foreground"
             >
               <X className="h-4 w-4" />
             </button>
@@ -126,7 +126,7 @@ export function ClosetTab() {
 
       {/* 搜索提示 */}
       {searchMode && hint ? (
-        <div className="rounded-lg bg-orange-50 px-3 py-2 text-[11px] leading-relaxed text-orange-700">
+        <div className="rounded-lg bg-orange-50 px-3 py-2 text-[11px] leading-relaxed text-orange-700 dark:bg-orange-500/10 dark:text-orange-400">
           🤖 {hint} · 共 {searchItems?.length ?? 0} 件
         </div>
       ) : null}
@@ -134,7 +134,7 @@ export function ClosetTab() {
       {/* 分类筛选（横向滚动） */}
       {!searchMode && (
         <>
-          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 md:-mx-8 md:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Chip active={cat === ''} onClick={() => setCat('')}>
               全部 {storeItems.length > 0 && <span className="opacity-60">{storeItems.length}</span>}
             </Chip>
@@ -147,7 +147,7 @@ export function ClosetTab() {
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[10px] font-medium text-stone-400">季节</span>
+            <span className="text-[10px] font-medium text-muted-foreground/70">季节</span>
             {SEASONS.map((s) => (
               <Chip key={s.key} active={season === s.key} onClick={() => setSeason(season === s.key ? '' : s.key)} className="px-2.5 py-1">
                 {s.label}
@@ -156,7 +156,7 @@ export function ClosetTab() {
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[10px] font-medium text-stone-400">状态</span>
+            <span className="text-[10px] font-medium text-muted-foreground/70">状态</span>
             {STORAGE_STATUS.map((s) => (
               <Chip key={s.key} active={status === s.key} onClick={() => setStatus(status === s.key ? '' : s.key)} className="px-2.5 py-1">
                 {s.label}
@@ -168,9 +168,9 @@ export function ClosetTab() {
 
       {/* 衣物网格 */}
       {loading ? (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-3 md:grid-cols-4 md:gap-4 lg:grid-cols-5 xl:grid-cols-6">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-stone-200/70" />
+            <div key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-muted/70" />
           ))}
         </div>
       ) : display.length === 0 ? (
@@ -183,14 +183,14 @@ export function ClosetTab() {
             <button
               type="button"
               onClick={() => openSheet({ type: 'form', item: null })}
-              className="mt-2 rounded-full bg-stone-900 px-5 py-2.5 text-xs font-bold text-white"
+              className="mt-2 rounded-full bg-stone-900 px-5 py-2.5 text-xs font-bold text-white dark:bg-stone-100 dark:text-stone-900"
             >
               扔第一件进来
             </button>
           </EmptyHint>
         )
       ) : (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-3 md:grid-cols-4 md:gap-4 lg:grid-cols-5 xl:grid-cols-6">
           {display.map((item) => (
             <ClothingCard key={item.id} item={item} onClick={() => openSheet({ type: 'detail', item })} />
           ))}
@@ -202,7 +202,7 @@ export function ClosetTab() {
         type="button"
         aria-label="添加衣物"
         onClick={() => fileRef.current?.click()}
-        className="fixed bottom-24 right-[max(1rem,calc(50%-13rem))] z-20 flex h-12 items-center gap-1.5 rounded-full bg-orange-600 px-4 text-sm font-bold text-white shadow-lg shadow-orange-600/30 transition-transform active:scale-95"
+        className="fixed bottom-24 right-[max(1rem,calc(50%-13rem))] z-20 flex h-12 items-center gap-1.5 rounded-full bg-orange-600 px-4 text-sm font-bold text-white shadow-lg shadow-orange-600/30 transition-all hover:bg-orange-500 active:scale-95 md:bottom-8 md:right-8"
       >
         <Plus className="h-4 w-4" />
         拍照添加
@@ -228,9 +228,9 @@ function ClothingCard({ item, onClick }: { item: ClothingItem; onClick: () => vo
     <button
       type="button"
       onClick={onClick}
-      className="group text-left transition-transform active:scale-[0.97]"
+      className="group text-left transition-transform hover:scale-[1.02] active:scale-[0.97]"
     >
-      <div className="relative aspect-[3/4] overflow-hidden rounded-xl border border-stone-100 bg-stone-50 shadow-sm">
+      <div className="relative aspect-[3/4] overflow-hidden rounded-xl border border-border/60 bg-muted shadow-sm">
         <ItemThumb item={item} rounded="rounded-none" />
         {item.storageStatus !== 'wearing' && (
           <span className="absolute left-1 top-1 rounded-md bg-stone-900/70 px-1.5 py-0.5 text-[9px] font-medium text-white">
@@ -247,13 +247,13 @@ function ClothingCard({ item, onClick }: { item: ClothingItem; onClick: () => vo
         )}
       </div>
       <div className="mt-1.5 px-0.5">
-        <p className="truncate text-xs font-medium text-stone-700">{item.name || '未命名'}</p>
+        <p className="truncate text-xs font-medium text-foreground">{item.name || '未命名'}</p>
         <div className="mt-0.5 flex items-center gap-1">
           <span
-            className="h-2 w-2 rounded-full border border-stone-200"
+            className="h-2 w-2 rounded-full border border-border/60"
             style={{ backgroundColor: colorHex(item.color) }}
           />
-          <span className="truncate text-[10px] text-stone-400">
+          <span className="truncate text-[10px] text-muted-foreground/70">
             {item.color ?? '—'}
             {item.wearCount > 0 && <span className="ml-1">· 穿过{item.wearCount}次</span>}
           </span>
