@@ -5,7 +5,7 @@
 
 import { useEffect } from 'react'
 import { api, setUnauthorizedHandler } from './api'
-import { useWW } from './store'
+import { useWW, readAuthCache, writeAuthCache } from './store'
 import { AuthScreen } from './AuthScreen'
 import { WearWhatApp } from './WearWhatApp'
 
@@ -26,12 +26,18 @@ export function AuthGate() {
   // 挂载时检查会话
   useEffect(() => {
     if (authChecked) return
+    // 先用上次的登录态直接放行：/api/auth/me 也要走一次网关往返（≈2.5s），
+    // 冷启动不必每次都停在「正在打开你的衣橱…」。后台仍会校验，失败就回登录页。
+    const cached = readAuthCache()
+    if (cached) useWW.setState({ user: cached, authChecked: true })
     void (async () => {
       try {
         const { user } = await api.authMe()
         useWW.getState().setUser(user)
+        writeAuthCache(user)
       } catch {
         useWW.getState().setUser(null)
+        writeAuthCache(null)
       } finally {
         useWW.setState({ authChecked: true })
       }

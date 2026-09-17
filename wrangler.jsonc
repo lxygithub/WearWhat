@@ -24,6 +24,12 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  // Smart Placement：数据层在内网 PostgreSQL（经 SQL Gateway），让 Worker 尽量靠近
+  // 数据源执行，减少「边缘 → 隧道 → 家机」往返（单程约 2.5s）。没有配置
+  // run_worker_first，静态资源仍由边缘直接返回，不受影响。
+  "placement": {
+    "mode": "smart"
+  },
 
   // D1 数据库绑定：数据库为 SQLite 方言，与本地 prisma/schema.prisma 兼容。
   // database_id 需要先执行 `bunx wrangler d1 create wearwhat-db`，
