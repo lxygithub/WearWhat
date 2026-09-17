@@ -2,6 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // SQL Gateway 模式用 pg 驱动（src/lib/gateway-pg.ts 把 pg.Pool 映射成网关请求）。
+  // pg 在 Workers 下会 require('pg-cloudflare')，而其 exports 带 workerd 条件指向
+  // dist/index.js；Next 的文件追踪默认只复制 dist/empty.js，esbuild 打包时便会
+  // 「Could not resolve "pg-cloudflare"」。整包纳入追踪即可（体积很小）。
+  outputFileTracingIncludes: {
+    "*": ["./node_modules/pg-cloudflare/**"],
+  },
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,

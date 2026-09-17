@@ -1,0 +1,127 @@
+// WearWhat 今天穿什么 · 数据模型
+// SQLite 方言（本地 dev 用 SQLite，生产部署 Cloudflare D1 —— 同为 SQLite 方言，可 1:1 迁移）
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma-worker-pg"
+  runtime      = "workerd"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["wearwhat"]
+}
+
+// 用户（邮箱注册）
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  // bcrypt 哈希
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@schema("wearwhat")
+}
+
+// 邮箱验证码（注册 / 找回密码）
+model VerificationCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  // register / reset
+  type      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, type])
+
+  @@schema("wearwhat")
+}
+
+// 衣物单品
+model ClothingItem {
+  id              String    @id @default(cuid())
+  userId          String    @default("default")
+  name            String?
+  // 类别: top / pants / skirt / outer / shoes / bag / accessory
+  category        String
+  color           String?
+  // 图案: solid / striped / plaid / print
+  pattern         String?
+  material        String?
+  // 季节 JSON 数组字符串: ["spring","autumn"] 或 ["all"]
+  seasons         String    @default("[]")
+  // 场合 JSON 数组字符串: ["commute","casual","sport","date","formal","home"]
+  occasions       String    @default("[]")
+  brand           String?
+  size            String?
+  price           Float?
+  purchaseDate    DateTime?
+  // 收纳状态: wearing / stored / laundry / repair / discarded
+  storageStatus   String    @default("wearing")
+  storageLocation String?
+  wearCount       Int       @default(0)
+  lastWornAt      DateTime?
+  // 图片：base64 data URL 或静态资源路径
+  imageData       String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  outfitItems OutfitItem[]
+
+  @@schema("wearwhat")
+}
+
+// 穿搭记录（一天可以有多条）
+model Outfit {
+  id        String   @id @default(cuid())
+  userId    String   @default("default")
+  // 日期字符串 YYYY-MM-DD（D1/SQLite 友好，避免时区问题）
+  date      String
+  occasion  String?
+  // 天气快照 JSON 字符串
+  weather   String?
+  notes     String?
+  // 来源: manual / recommend
+  source    String   @default("manual")
+  createdAt DateTime @default(now())
+
+  items OutfitItem[]
+
+  @@index([userId, date])
+
+  @@schema("wearwhat")
+}
+
+// 穿搭 <-> 衣物 关联
+model OutfitItem {
+  outfitId       String
+  clothingItemId String
+
+  outfit   Outfit       @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  clothing ClothingItem @relation(fields: [clothingItemId], references: [id], onDelete: Cascade)
+
+  @@id([outfitId, clothingItemId])
+
+  @@schema("wearwhat")
+}
+
+// 愿望清单
+model WishlistItem {
+  id            String   @id @default(cuid())
+  userId        String   @default("default")
+  name          String
+  category      String?
+  expectedPrice Float?
+  priority      Int      @default(0)
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  @@schema("wearwhat")
+}

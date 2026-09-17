@@ -47,6 +47,16 @@
   ],
 
   // 可观测性：开启后在 Cloudflare 控制台可查看 Worker 的日志与指标
+  // ── SQL Gateway（内网数据库统一查询入口）────────────────────────
+  // 2026-09：数据层由 D1 迁到自建 PostgreSQL，Worker 经 WAF + Tunnel 调用家中网关，
+  // 不直连数据库端口。地址与 target 名均非机密。协议与排错见 sql-gateway 仓库
+  // 《使用与接入指南》；daohang / forgotit 用同一 target、各自独立 schema。
+  "vars": {
+    "SQL_GATEWAY_URL": "https://db-gateway.ieop.top/v1/query",
+    // 独立库 + 独立 ro/rw 账号（库级隔离；原先用 forgotit 库的 wearwhat schema）
+    "SQL_GATEWAY_TARGET": "wearwhat-postgres"
+  },
+
   "observability": {
     "enabled": true
   }
