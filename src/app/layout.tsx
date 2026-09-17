@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "./providers";
+import { PwaRegister } from "@/components/pwa-register";
 
 export const metadata: Metadata = {
   title: "今天穿什么 · WearWhat",
@@ -38,6 +39,8 @@ export default function RootLayout({
         <Providers>
           {children}
           <Toaster />
+          {/* 注册 Service Worker：让手机「添加到主屏幕」后能缓存 App 壳 */}
+          <PwaRegister />
         </Providers>
       </body>
     </html>
